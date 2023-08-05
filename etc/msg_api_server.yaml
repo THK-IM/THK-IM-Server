@@ -1,0 +1,75 @@
+Name: msg_api_server
+Host: 0.0.0.0
+Port: 18000
+Mode: debug
+OfflineInterval: 20
+Node:
+  MaxCount: 1024
+  PollingInterval: 15
+Logg:
+  Dir: logs
+  RetainAge: 720
+  RotationAge: 1
+RedisCache:
+  Endpoint: "{{redis_endpoint}}"
+  Uri: "/0"
+  MaxIdleConn: 10
+  MaxOpenConn: 20
+  ConnMaxLifeTime: 3600
+  ConnMaxIdleTime: 3600
+DataSource:
+  Endpoint: "{{mysql_endpoint}}"
+  Uri: "/thk_im?charset=utf8mb4&parseTime=True&loc=Local"
+  MaxIdleConn: 10
+  MaxOpenConn: 50
+  ConnMaxLifeTime: 3600
+  ConnMaxIdleTime: 3600
+Models:
+  - Name: "session"
+    Shards: 100
+  - Name: "user_session"
+    Shards: 100
+  - Name: "session_user"
+    Shards: 100
+  - Name: "session_message"
+    Shards: 100
+  - Name: "user_message"
+    Shards: 100
+  - Name: "user_online_status"
+    Shards: 1
+Metric:
+  Endpoint: "/metrics"
+  PushGateway: ""
+  PushInterval: 10
+Sdks:
+  - Name: api-server
+    Host: "http://127.0.0.1:18000"
+Publishes:
+  - Name: "push_msg"
+    Topic: "push_msg"
+    MaxQueueLen: 1000
+    Engine: "redis"
+  - Name: "save_msg"
+    Topic: "save_msg"
+    MaxQueueLen: 10000
+    Engine: "redis"
+  - Name: "server_event"
+    Topic: "server_event"
+    MaxQueueLen: 1000
+    Engine: "redis"
+Subscribers:
+  - Name: "push_msg"
+    Topic: "push_msg"
+    Group: ""
+    RetryTime: 5
+    Engine: "redis"
+  - Name: "save_msg"
+    Topic: "save_msg"
+    Group: "group_mysql"
+    RetryTime: 5
+    Engine: "redis"
+  - Name: "server_event"
+    Topic: "server_event"
+    Group: ""
+    RetryTime: 5
+    Engine: "redis"
