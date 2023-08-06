@@ -26,7 +26,7 @@ func (l *UserLogic) UpdateUserOnlineStatus(req *dto.PostUserOnlineReq) error {
 	if req.Online {
 		isOnline = 1
 	}
-	return l.appCtx.UserOnlineStatusModel().UpdateUserOnlineStatus(req.UserId, isOnline)
+	return l.appCtx.UserOnlineStatusModel().UpdateUserOnlineStatus(req.UId, isOnline)
 }
 
 func (l *UserLogic) GetUsersOnlineStatus(uIds []int64) (*dto.GetUsersOnlineStatusRes, error) {
@@ -61,8 +61,8 @@ func (l *UserLogic) KickUser(req *dto.KickUserReq) error {
 		return err
 	} else {
 		msg := make(map[string]interface{})
-		msg[event.PushEventTypeKey] = event.PushUserEvent
-		msg[event.PushEventSubTypeKey] = 1
+		msg[event.PushEventTypeKey] = event.PushUserEventType
+		msg[event.PushEventSubTypeKey] = event.UserEventSubtypeKickOff
 		msg[event.PushEventReceiversKey] = string(idsStr)
 		msg[event.PushEventBodyKey] = "kickOff"
 		return l.appCtx.MsgPusherPublisher().Pub("", msg)

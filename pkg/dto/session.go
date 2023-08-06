@@ -1,11 +1,5 @@
 package dto
 
-type AckUserMessagesReq struct {
-	Uid        int64   `json:"uid"`
-	SessionId  int64   `json:"session_id" binding:"required"`
-	MessageIds []int64 `json:"msg_ids" binding:"required"`
-}
-
 type CreateSessionReq struct {
 	Type     int     `json:"type" binding:"required"`
 	EntityId int64   `json:"entity_id"`

@@ -57,3 +57,20 @@ func getUsersOnlineStatus(appCtx *app.Context) gin.HandlerFunc {
 		}
 	}
 }
+
+func kickOffUser(appCtx *app.Context) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req dto.KickUserReq
+		if err := ctx.ShouldBindJSON(&req); err != nil {
+			dto.ResponseBadRequest(ctx)
+			return
+		}
+		l := logic.NewUserLogic(ctx, appCtx)
+		if err := l.KickUser(&req); err != nil {
+			dto.ResponseInternalServerError(ctx, err)
+		} else {
+			dto.ResponseSuccess(ctx, nil)
+		}
+
+	}
+}

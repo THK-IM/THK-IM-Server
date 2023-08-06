@@ -41,7 +41,7 @@ func deleteSessionUser(appCtx *app.Context) gin.HandlerFunc {
 			return
 		} else {
 			l := logic.NewSessionLogic(ctx, appCtx)
-			if e := l.DelMember(int64(sid), req); e != nil {
+			if e := l.DelUser(int64(sid), req); e != nil {
 				dto.ResponseInternalServerError(ctx, e)
 			} else {
 				dto.ResponseSuccess(ctx, nil)

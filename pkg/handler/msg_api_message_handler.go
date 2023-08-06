@@ -32,9 +32,9 @@ func pushMessage(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
-		if req.Type == event.PushCommonEvent || req.Type == event.PushUserEvent ||
-			req.Type == event.PushFriendEvent || req.Type == event.PushGroupEvent ||
-			req.Type == event.PushOtherEvent {
+		if req.Type == event.PushCommonEventType || req.Type == event.PushUserEventType ||
+			req.Type == event.PushFriendEventType || req.Type == event.PushGroupEventType ||
+			req.Type == event.PushOtherEventType {
 			l := logic.NewMessageLogic(ctx, appCtx)
 			if rsp, err := l.PushMessage(req); err != nil {
 				dto.ResponseInternalServerError(ctx, err)
@@ -49,22 +49,6 @@ func pushMessage(appCtx *app.Context) gin.HandlerFunc {
 }
 
 func getUserLatestMessages(appCtx *app.Context) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var req dto.GetMessageReq
-		if err := ctx.BindQuery(&req); err != nil {
-			dto.ResponseBadRequest(ctx)
-			return
-		}
-		l := logic.NewMessageLogic(ctx, appCtx)
-		if resp, err := l.GetUserMessages(req); err != nil {
-			dto.ResponseInternalServerError(ctx, err)
-		} else {
-			dto.ResponseSuccess(ctx, resp)
-		}
-	}
-}
-
-func getUserOfflineMessages(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req dto.GetMessageReq
 		if err := ctx.BindQuery(&req); err != nil {

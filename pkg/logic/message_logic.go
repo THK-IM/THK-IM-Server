@@ -121,7 +121,7 @@ func (l *MessageLogic) SendMessage(req dto.SendMessageReq) (*dto.SendMessageRes,
 			}
 		}
 	}
-	receivers := l.appCtx.SessionUserModel().FindUIdsInSessionWithoutStatus(req.SessionId, model.RejectBitInUserSessionStatus, nil)
+	receivers := l.appCtx.SessionUserModel().FindUIdsInSessionWithoutStatus(req.SessionId, model.RejectBitInUserSessionStatus, req.Receivers)
 	if receivers == nil || len(receivers) == 0 {
 		return nil, errorx.ErrOtherRejectMessage
 	}
@@ -136,7 +136,7 @@ func (l *MessageLogic) SendMessage(req dto.SendMessageReq) (*dto.SendMessageRes,
 	if sessionMessage == nil || sessionMessage.SessionId == 0 {
 		// 插入数据库发送消息
 		msgId := int64(l.appCtx.SnowflakeNode().Generate())
-		sessionMessage, errSession = l.appCtx.SessionMessageModel().SendMessage(req.ClientId, req.FUid, req.SessionId, msgId, req.Body, req.Type, req.AtUsers, req.RMsgId)
+		sessionMessage, errSession = l.appCtx.SessionMessageModel().InsertMessage(req.ClientId, req.FUid, req.SessionId, msgId, req.Body, req.Type, req.AtUsers, req.RMsgId)
 		if errSession != nil || sessionMessage == nil {
 			l.appCtx.Logger().Error(errSession, req)
 			return nil, errSession
@@ -174,7 +174,7 @@ func (l *MessageLogic) publishSendMessageEvents(sessionMsg *model.SessionMessage
 	}
 	msgJsonStr := string(msgJson)
 
-	onlineUIds, offlineUIds, errPubPush := l.pubPushMessageEvent(event.PushMsgEvent, 0, msgJsonStr, receivers)
+	onlineUIds, offlineUIds, errPubPush := l.pubPushMessageEvent(event.PushMsgEventType, 0, msgJsonStr, receivers)
 	if errPubPush != nil {
 		l.appCtx.Logger().Error("pubPushMessageEvent, err:", errPubPush)
 		return nil, nil, errPubPush
@@ -248,5 +248,5 @@ func (l *MessageLogic) pubPushMessageEvent(t, subType int, body string, uIds []i
 }
 
 func (l *MessageLogic) DeleteUserMessage(req *dto.DeleteMessageReq) error {
-	return l.appCtx.UserMessageModel().DeleteMessages(req.Uid, req.SessionId, req.MessageIds, req.TimeFrom, req.TimeTo)
+	return l.appCtx.UserMessageModel().DeleteMessages(req.UId, req.SessionId, req.MessageIds, req.TimeFrom, req.TimeTo)
 }

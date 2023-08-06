@@ -17,13 +17,13 @@ func RegisterApiHandlers(ctx *app.Context) {
 
 	messageGroup := httpEngine.Group("/message")
 	{
-		messageGroup.POST("", sendMessage(ctx))                  // 发送消息
-		messageGroup.DELETE("", deleteUserMessage(ctx))          // 删除消息
-		messageGroup.POST("/ack", ackUserMessages(ctx))          // 会话消息设置ack
-		messageGroup.POST("/:id/read", readUserMessage(ctx))     // 会话消息设置已读 TODO
-		messageGroup.POST("/:id/revoke", revokeUserMessage(ctx)) // 会话消息撤回 TODO
-		messageGroup.POST("/push", pushMessage(ctx))             // 推送消息(用户消息/好友消息/群组消息/自定义消息)
-		messageGroup.GET("/latest", getUserLatestMessages(ctx))  // 获取最近消息
+		messageGroup.POST("", sendMessage(ctx))                 // 发送消息
+		messageGroup.DELETE("", deleteUserMessage(ctx))         // 删除消息
+		messageGroup.POST("/ack", ackUserMessages(ctx))         // 会话消息设置ack(已接受)
+		messageGroup.POST("/read", readUserMessage(ctx))        // 会话消息设置已读
+		messageGroup.POST("/revoke", revokeUserMessage(ctx))    // 会话消息撤回
+		messageGroup.POST("/push", pushMessage(ctx))            // 推送消息(用户消息/好友消息/群组消息/自定义消息)
+		messageGroup.GET("/latest", getUserLatestMessages(ctx)) // 获取最近消息
 	}
 
 	userSessionGroup := httpEngine.Group("/user_session")
@@ -37,5 +37,6 @@ func RegisterApiHandlers(ctx *app.Context) {
 	{
 		userGroup.POST("/online", updateUserOnlineStatus(ctx)) // 更新用户在线状态
 		userGroup.GET("/online", getUsersOnlineStatus(ctx))    // 获取用户上线状态
+		userGroup.POST("/kickoff", kickOffUser(ctx))           // 踢下线用户
 	}
 }

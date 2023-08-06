@@ -16,22 +16,23 @@ const (
 
 type (
 	UserMessage struct {
-		MsgId      int64  `gorm:"msg_id" json:"msg_id"`
-		ClientId   int64  `gorm:"client_id" json:"client_id"`
-		UserId     int64  `gorm:"user_id" json:"user_id"`
-		SessionId  int64  `gorm:"session_id" json:"session_id"`
-		FromUserId int64  `gorm:"from_user_id" json:"from_user_id"`
-		AtUsers    string `gorm:"at_users" json:"at_users"`
-		MsgType    int    `gorm:"msg_type" json:"msg_type"`
-		MsgContent string `gorm:"msg_content" json:"msg_content"`
-		ReplyMsgId int64  `gorm:"reply_msg_id" json:"reply_msg_id"`
-		Status     int    `gorm:"status" json:"status"`
-		CreateTime int64  `gorm:"create_time" json:"create_time"`
-		UpdateTime int64  `gorm:"update_time" json:"update_time"`
-		Deleted    int8   `gorm:"deleted" json:"deleted"`
+		MsgId      int64   `gorm:"msg_id" json:"msg_id"`
+		ClientId   int64   `gorm:"client_id" json:"client_id"`
+		UserId     int64   `gorm:"user_id" json:"user_id"`
+		SessionId  int64   `gorm:"session_id" json:"session_id"`
+		FromUserId int64   `gorm:"from_user_id" json:"from_user_id"`
+		MsgType    int     `gorm:"msg_type" json:"msg_type"`
+		MsgContent string  `gorm:"msg_content" json:"msg_content"`
+		ReplyMsgId *int64  `gorm:"reply_msg_id" json:"reply_msg_id"`
+		AtUsers    *string `gorm:"at_users" json:"at_users"`
+		Status     int     `gorm:"status" json:"status"`
+		CreateTime int64   `gorm:"create_time" json:"create_time"`
+		UpdateTime int64   `gorm:"update_time" json:"update_time"`
+		Deleted    int8    `gorm:"deleted" json:"deleted"`
 	}
 
 	UserMessageModel interface {
+		FindUserMessage(userId, sessionId, messageId int64) (*UserMessage, error)
 		InsertUserMessage(m *UserMessage) error
 		AckUserMessages(userId int64, sessionId int64, messageIds []int64) error
 		GetUserMessages(userId int64, ctime int, offset, count int) ([]*UserMessage, error)
@@ -46,6 +47,13 @@ type (
 		snowflakeNode *snowflake.Node
 	}
 )
+
+func (d defaultUserMessageModel) FindUserMessage(userId, sessionId, messageId int64) (*UserMessage, error) {
+	result := &UserMessage{}
+	strSql := "select * from " + d.genUserMessageTableName(userId) + " where user_id = ? and session_id = ? and msg_id = ?"
+	err := d.db.Raw(strSql, userId, sessionId, messageId).Scan(result).Error
+	return result, err
+}
 
 func (d defaultUserMessageModel) InsertUserMessage(m *UserMessage) error {
 	return d.db.Table(d.genUserMessageTableName(m.UserId)).Clauses(clause.OnConflict{DoNothing: true}).Create(m).Error
@@ -81,7 +89,7 @@ func (d defaultUserMessageModel) DeleteMessages(userId int64, sessionId int64, m
 }
 
 func (d defaultUserMessageModel) UpdateUserMessage(userId int64, sessionId int64, msgIds []int64, status int) error {
-	sqlStr := fmt.Sprintf("update %s set status = ? where user_id = ? and session_id = ? and msg_id in ? ", d.genUserMessageTableName(userId))
+	sqlStr := fmt.Sprintf("update %s set status = status | ? where user_id = ? and session_id = ? and msg_id in ? ", d.genUserMessageTableName(userId))
 	err := d.db.Exec(sqlStr, status, userId, sessionId, msgIds).Error
 	return err
 }

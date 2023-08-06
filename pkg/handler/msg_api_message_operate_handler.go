@@ -15,7 +15,7 @@ func ackUserMessages(appCtx *app.Context) gin.HandlerFunc {
 			return
 		}
 		l := logic.NewMessageLogic(ctx, appCtx)
-		if err := l.AckUserMessages(&req); err != nil {
+		if err := l.AckUserMessages(req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
 		} else {
 			dto.ResponseSuccess(ctx, nil)
@@ -25,12 +25,32 @@ func ackUserMessages(appCtx *app.Context) gin.HandlerFunc {
 
 func readUserMessage(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// TODO
+		var req dto.ReadUserMessageReq
+		if err := ctx.BindJSON(&req); err != nil {
+			dto.ResponseBadRequest(ctx)
+			return
+		}
+		l := logic.NewMessageLogic(ctx, appCtx)
+		if err := l.ReadUserMessages(req); err != nil {
+			dto.ResponseInternalServerError(ctx, err)
+		} else {
+			dto.ResponseSuccess(ctx, nil)
+		}
 	}
 }
 
 func revokeUserMessage(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		// TODO
+		var req dto.RevokeUserMessageReq
+		if err := ctx.BindJSON(&req); err != nil {
+			dto.ResponseBadRequest(ctx)
+			return
+		}
+		l := logic.NewMessageLogic(ctx, appCtx)
+		if err := l.RevokeUserMessage(req); err != nil {
+			dto.ResponseInternalServerError(ctx, err)
+		} else {
+			dto.ResponseSuccess(ctx, nil)
+		}
 	}
 }

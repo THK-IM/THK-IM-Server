@@ -4,7 +4,7 @@ type PostUserOnlineReq struct {
 	NodeId int64 `json:"node_id" binding:"required"`
 	ConnId int64 `json:"conn_id" binding:"required"`
 	Online bool  `json:"online" `
-	UserId int64 `json:"user_id" binding:"required"`
+	UId    int64 `json:"u_id" binding:"required"`
 }
 
 type GetUsersOnlineStatusReq struct {

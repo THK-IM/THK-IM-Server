@@ -22,7 +22,7 @@ func RegisterMsgPushHandlers(ctx *app.Context) {
 			// 下发服务器时间
 			now := time.Now().UnixMilli()
 			serverTimeBody := &event.PushBody{
-				Type:    event.PushCommonEvent,
+				Type:    event.PushCommonEventType,
 				SubType: 3,
 				Body:    strconv.Itoa(int(now)),
 			}
@@ -38,7 +38,7 @@ func RegisterMsgPushHandlers(ctx *app.Context) {
 		{
 			// 下发连接id
 			connIdBody := &event.PushBody{
-				Type:    event.PushCommonEvent,
+				Type:    event.PushCommonEventType,
 				SubType: 4,
 				Body:    fmt.Sprintf("%d", client.Info().Id),
 			}
@@ -108,7 +108,7 @@ func onMqPushMsgReceived(m map[string]interface{}, server websocket.Server, ctx 
 }
 
 func onWsClientMsgReceived(ctx *app.Context, client websocket.Client, ty, subType int, body string) error {
-	if ty == event.PushCommonEvent {
+	if ty == event.PushCommonEventType {
 		if subType == 1 {
 			return onWsHeatBeatMsgReceived(ctx, client, body)
 		} else {
@@ -121,7 +121,7 @@ func onWsClientMsgReceived(ctx *app.Context, client websocket.Client, ty, subTyp
 func onWsHeatBeatMsgReceived(ctx *app.Context, client websocket.Client, body string) error {
 	// 心跳
 	heatBody := &event.PushBody{
-		Type:    event.PushCommonEvent,
+		Type:    event.PushCommonEventType,
 		SubType: 2,
 		Body:    "pong",
 	}

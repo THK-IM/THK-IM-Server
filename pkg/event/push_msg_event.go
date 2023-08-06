@@ -12,13 +12,21 @@ const (
 	// PushEventBodyKey 推送事件Body Key
 	PushEventBodyKey = "push_body_key"
 
-	// PushCommonEvent 通用推送事件类型
-	PushCommonEvent = 0
-	PushUserEvent   = 1
-	PushFriendEvent = 2
-	PushGroupEvent  = 3
-	PushMsgEvent    = 4
-	PushOtherEvent  = 5
+	// PushCommonEventType 通用推送事件类型
+	PushCommonEventType = 0
+	PushUserEventType   = 1
+	PushFriendEventType = 2
+	PushGroupEventType  = 3
+	PushMsgEventType    = 4
+	PushOtherEventType  = 5
+
+	CommonEventSubtypePing     = 1
+	CommonEventSubtypePong     = 2
+	CommonEventSubtypeSyncTime = 3
+
+	UserEventSubtypeKickOff    = 1
+	UserEventSubtypeOnline     = 2
+	UserEventSubtypeInfoUpdate = 3
 )
 
 type (

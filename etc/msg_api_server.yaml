@@ -26,15 +26,15 @@ DataSource:
   ConnMaxIdleTime: 3600
 Models:
   - Name: "session"
-    Shards: 100
+    Shards: 5
   - Name: "user_session"
-    Shards: 100
+    Shards: 5
   - Name: "session_user"
-    Shards: 100
+    Shards: 5
   - Name: "session_message"
-    Shards: 100
+    Shards: 5
   - Name: "user_message"
-    Shards: 100
+    Shards: 5
   - Name: "user_online_status"
     Shards: 1
 Metric:
