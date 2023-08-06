@@ -7,6 +7,7 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/metric"
 	"github.com/THK-IM/THK-IM-Server/pkg/model"
 	"github.com/THK-IM/THK-IM-Server/pkg/mq"
+	"github.com/THK-IM/THK-IM-Server/pkg/rpc"
 	"github.com/THK-IM/THK-IM-Server/pkg/websocket"
 	"github.com/bwmarrin/snowflake"
 	"github.com/gin-gonic/gin"
@@ -26,6 +27,7 @@ type Context struct {
 	snowflakeNode   *snowflake.Node
 	httpEngine      *gin.Engine
 	websocketServer websocket.Server
+	rpcMap          map[string]interface{}
 	modelMap        map[string]interface{}
 	publisherMap    map[string]mq.Publisher
 	subscriberMap   map[string]mq.Subscriber
@@ -99,6 +101,14 @@ func (c *Context) UserOnlineStatusModel() model.UserOnlineStatusModel {
 	return c.modelMap["user_online_status"].(model.UserOnlineStatusModel)
 }
 
+func (c *Context) RpcMsgApi() rpc.MsgApi {
+	return c.rpcMap["msg-api"].(rpc.MsgApi)
+}
+
+func (c *Context) RpcUserApi() rpc.UserApi {
+	return c.rpcMap["user-api"].(rpc.UserApi)
+}
+
 func (c *Context) Collector() *metric.Collector {
 	return c.collector
 }
@@ -152,6 +162,9 @@ func NewAppContext(config conf.Config, httpEngine *gin.Engine) *Context {
 	}
 	if config.Subscribers != nil {
 		ctx.subscriberMap = loader.LoadSubscribers(config.Subscribers, nodeIdStr, logger, redisCache)
+	}
+	if config.Sdks != nil {
+		ctx.rpcMap = loader.LoadSdks(config.Sdks, logger)
 	}
 	if config.WebSocket != nil {
 		ctx.websocketServer = websocket.NewServer(config.WebSocket, logger, httpEngine, snowflakeNode, config.Mode)

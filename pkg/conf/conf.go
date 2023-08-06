@@ -22,8 +22,8 @@ type Logg struct {
 }
 
 type Sdk struct {
-	Name string `yaml:"Name"`
-	Host string `yaml:"Host"`
+	Name     string `yaml:"Name"`
+	Endpoint string `yaml:"Endpoint"`
 }
 
 type Model struct {

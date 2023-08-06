@@ -46,8 +46,10 @@ Metric:
   PushGateway: ""
   PushInterval: 10
 Sdks:
-  - Name: api-server
-    Host: "http://127.0.0.1:18000"
+  - Name: msg-api
+    Endpoint: "http://127.0.0.1:18000"
+  - Name: user-api
+    Endpoint: "http://127.0.0.1:18000"
 Publishes:
   - Name: "push_msg"
     Topic: "push_msg"

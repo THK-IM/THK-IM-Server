@@ -5,6 +5,7 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/app"
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
 	"github.com/THK-IM/THK-IM-Server/pkg/event"
+	"github.com/THK-IM/THK-IM-Server/pkg/rpc"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -26,7 +27,17 @@ func (l *UserLogic) UpdateUserOnlineStatus(req *dto.PostUserOnlineReq) error {
 	if req.Online {
 		isOnline = 1
 	}
-	return l.appCtx.UserOnlineStatusModel().UpdateUserOnlineStatus(req.UId, isOnline)
+	err := l.appCtx.UserOnlineStatusModel().UpdateUserOnlineStatus(req.UId, isOnline)
+	go func() {
+		onlineReq := rpc.PostUserOnlineReq{
+			UserId:   req.UId,
+			IsOnline: req.Online,
+		}
+		if e := l.appCtx.RpcUserApi().PostUserOnlineStatus(onlineReq); e != nil {
+			l.appCtx.Logger().Errorf("UpdateUserOnlineStatus, RpcUserApi, call err: %v", e)
+		}
+	}()
+	return err
 }
 
 func (l *UserLogic) GetUsersOnlineStatus(uIds []int64) (*dto.GetUsersOnlineStatusRes, error) {

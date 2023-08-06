@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/app"
+	"github.com/THK-IM/THK-IM-Server/pkg/dto"
 	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/THK-IM/THK-IM-Server/pkg/event"
+	"github.com/THK-IM/THK-IM-Server/pkg/rpc"
 	"github.com/THK-IM/THK-IM-Server/pkg/websocket"
 	"strconv"
 	"time"
@@ -13,8 +15,13 @@ import (
 
 func RegisterMsgPushHandlers(ctx *app.Context) {
 	server := ctx.WebsocketServer()
-	server.SetUidGetter(func(token string, pf int) (uid int64, err error) {
-		return int64(1), nil
+	server.SetUidGetter(func(token string, pf string) (int64, error) {
+		req := rpc.GetUserIdByTokenReq{Token: token, Platform: pf}
+		if res, err := ctx.RpcUserApi().GetUserIdByToken(req); err != nil {
+			return 0, err
+		} else {
+			return res.UserId, nil
+		}
 	})
 	server.SetOnClientConnected(func(client websocket.Client) {
 		ctx.Logger().Infof("OnClientConnected: %v", client.Info())
@@ -137,6 +144,15 @@ func onWsHeatBeatMsgReceived(ctx *app.Context, client websocket.Client, body str
 func sendUserOnlineStatus(ctx *app.Context, client websocket.Client, online bool) {
 	now := time.Now().UnixMilli()
 	client.SetLastOnlineTime(now)
+	req := dto.PostUserOnlineReq{
+		NodeId: ctx.NodeId(),
+		ConnId: client.Info().Id,
+		Online: online,
+		UId:    client.Info().UId,
+	}
+	if err := ctx.RpcMsgApi().PostUserOnlineStatus(req); err != nil {
+		ctx.Logger().Errorf("sendUserOnlineStatus, err: %v", err)
+	}
 }
 
 func onMqServerEventReceived(m map[string]interface{}, server websocket.Server, ctx *app.Context) error {

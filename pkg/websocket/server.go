@@ -23,7 +23,7 @@ const (
 
 type OnClientChange func(client Client)
 type OnClientMsgReceived func(msg string, client Client)
-type UidGetter func(token string, platform int) (uid int64, err error)
+type UidGetter func(token string, platform string) (uid int64, err error)
 
 type Server interface {
 	Init() error
@@ -249,10 +249,6 @@ func (server *WsServer) getToken(ctx *gin.Context) error {
 			pf, _ = ctx.Cookie(PlatformKey)
 		}
 	}
-	ipf, e := strconv.Atoi(pf)
-	if e != nil {
-		return e
-	}
 
 	if server.mode == "debug" {
 		uid := ctx.Query(UidKey)
@@ -282,7 +278,7 @@ func (server *WsServer) getToken(ctx *gin.Context) error {
 	if strings.EqualFold("", token) {
 		return errors.New("token nil")
 	} else {
-		uid, err := server.GetUidByToken(token, ipf)
+		uid, err := server.GetUidByToken(token, pf)
 		if err == nil {
 			server.logger.Infof("GetUidByToken, token: %s, uid: %d", token, uid)
 			ctx.Request.Header.Set(PlatformKey, pf)
