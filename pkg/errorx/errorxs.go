@@ -16,3 +16,6 @@ var ErrOtherRejectMessage = New("The other party refuses to receive the message"
 var ErrMessageDeliveryFailed = New("Message delivery failed")
 
 var ErrMessageFormat = New("Message format error")
+var ErrSessionType = NewErrorX(5000000, "invalid session type")
+var ErrGroupMemberCount = NewErrorX(5000000, "group member beyond")
+var ErrGroupAlreadyDeleted = NewErrorX(5000001, "group has been deleted")

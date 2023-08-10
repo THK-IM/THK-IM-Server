@@ -2,7 +2,10 @@ Name: msg_push_server
 Host: 0.0.0.0
 Port: 18002
 Mode: debug
-OfflineInterval: 20
+OnlineTimeout: 20
+IM:
+  MaxGroupMember: 500
+  MaxSuperGroupMember: 100000
 WebSocket:
   Uri: "/ws"
   MaxClient: 50000

@@ -70,22 +70,28 @@ type Mq struct {
 	RetryTime int64  `yaml:"RetryTime"`
 }
 
+type IM struct {
+	MaxGroupMember      int `yaml:"MaxGroupMember"`
+	MaxSuperGroupMember int `yaml:"MaxSuperGroupMember"`
+}
+
 type Config struct {
-	Name            string      `yaml:"Name"`
-	Host            string      `yaml:"Host"`
-	Port            string      `yaml:"Port"`
-	Mode            string      `yaml:"Mode"`
-	OfflineInterval int64       `yaml:"OfflineInterval"` // 单位 秒
-	WebSocket       *WebSocket  `yaml:"WebSocket"`
-	Logg            *Logg       `yaml:"Logg"`
-	Sdks            []Sdk       `yaml:"Sdks"`
-	Node            *Node       `yaml:"Node"`
-	Database        *Database   `yaml:"DataSource"`
-	RedisCache      *RedisCache `yaml:"RedisCache"`
-	Models          []Model     `yaml:"Models"`
-	Metric          *Metric     `yaml:"Metric"`
-	Publishes       []Mq        `yaml:"Publishes"`
-	Subscribers     []Mq        `yaml:"Subscribers"`
+	Name          string      `yaml:"Name"`
+	Host          string      `yaml:"Host"`
+	Port          string      `yaml:"Port"`
+	Mode          string      `yaml:"Mode"`
+	OnlineTimeout int64       `yaml:"OnlineTimeout"` // 单位 秒
+	IM            *IM         `yaml:"IM"`
+	WebSocket     *WebSocket  `yaml:"WebSocket"`
+	Logg          *Logg       `yaml:"Logg"`
+	Sdks          []Sdk       `yaml:"Sdks"`
+	Node          *Node       `yaml:"Node"`
+	Database      *Database   `yaml:"DataSource"`
+	RedisCache    *RedisCache `yaml:"RedisCache"`
+	Models        []Model     `yaml:"Models"`
+	Metric        *Metric     `yaml:"Metric"`
+	Publishes     []Mq        `yaml:"Publishes"`
+	Subscribers   []Mq        `yaml:"Subscribers"`
 }
 
 func Load(f string) (c Config, err error) {

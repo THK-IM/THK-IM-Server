@@ -31,7 +31,8 @@ type (
 	}
 
 	UserSessionModel interface {
-		FindUserSessionByEntityId(uId, entityId int64, sessionType int) (*UserSession, error)
+		RecoverUserSession(userId, sessionId, time int64) error
+		FindUserSessionByEntityId(uId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error)
 		UpdateUserSession(userId, sessionId int64, top *int64, status *int, tx *gorm.DB) error
 		FindEntityIdsInUserSession(userId int64, sessionId int64) []int64
 		GetUserSessions(uid, mTime int64, offset, count int) ([]*UserSession, error)
@@ -46,9 +47,24 @@ type (
 	}
 )
 
-func (d defaultUserSessionModel) FindUserSessionByEntityId(uId, entityId int64, sessionType int) (*UserSession, error) {
+func (d defaultUserSessionModel) RecoverUserSession(userId, sessionId, time int64) error {
+	conditions := []int64{userId, sessionId}
+	updateMap := make(map[string]interface{})
+	updateMap["top"] = 0
+	updateMap["status"] = 0
+	updateMap["create_time"] = time
+	updateMap["update_time"] = time
+	updateMap["deleted"] = 0
+	return d.db.Table(d.genUserSessionTableName(userId)).Where("user_id = ? and session_id = ?", conditions).Updates(updateMap).Error
+
+}
+
+func (d defaultUserSessionModel) FindUserSessionByEntityId(uId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error) {
 	userSession := &UserSession{}
 	sqlStr := "select * from " + d.genUserSessionTableName(uId) + " where user_id = ? and entity_id = ? and type = ?"
+	if !containDeleted {
+		sqlStr += " and deleted = 0"
+	}
 	err := d.db.Raw(sqlStr, uId, entityId, sessionType).Scan(&userSession).Error
 	return userSession, err
 }

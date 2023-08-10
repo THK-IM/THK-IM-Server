@@ -2,6 +2,7 @@ package model
 
 import (
 	"fmt"
+	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/bwmarrin/snowflake"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -20,9 +21,10 @@ type (
 	}
 
 	SessionUserModel interface {
+		FindSessionUserCount(sessionId int64) (int, error)
 		FindUIdsInSessionWithoutStatus(sessionId int64, status int, uIds []int64) []int64
 		FindUIdsInSessionContainStatus(sessionId int64, status int, uIds []int64) []int64
-		AddUser(session *Session, entityId int64, uIds []int64) (err error)
+		AddUser(session *Session, entityId int64, uIds []int64, maxCount int) (err error)
 		DelUser(session *Session, uIds []int64) (err error)
 		UpdateUser(sId, uId int64, status int, tx *gorm.DB) (err error)
 	}
@@ -34,6 +36,14 @@ type (
 		snowflakeNode *snowflake.Node
 	}
 )
+
+func (d defaultSessionUserModel) FindSessionUserCount(sessionId int64) (int, error) {
+	count := 0
+	tableName := d.genSessionUserTableName(sessionId)
+	sqlStr := fmt.Sprintf("select user_id from %s where session_id = ?  and deleted = 0", tableName)
+	err := d.db.Raw(sqlStr, sessionId).Scan(&count).Error
+	return count, err
+}
 
 func (d defaultSessionUserModel) FindUIdsInSessionWithoutStatus(sessionId int64, status int, uIds []int64) []int64 {
 	userIds := make([]int64, 0)
@@ -79,7 +89,7 @@ func (d defaultSessionUserModel) FindUIdsInSessionContainStatus(sessionId int64,
 	return userIds
 }
 
-func (d defaultSessionUserModel) AddUser(session *Session, entityId int64, uIds []int64) (err error) {
+func (d defaultSessionUserModel) AddUser(session *Session, entityId int64, uIds []int64, maxCount int) (err error) {
 	tx := d.db.Begin()
 	defer func() {
 		if err != nil {
@@ -88,6 +98,15 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityId int64, uIds 
 			_ = tx.Commit().Error
 		}
 	}()
+	count := 0
+	tableName := d.genSessionUserTableName(session.Id)
+	sqlStr := fmt.Sprintf("select user_id from %s where session_id = ? and deleted = 0", tableName)
+	if err = tx.Raw(sqlStr, session.Id).Scan(&count).Error; err != nil {
+		return err
+	}
+	if count > maxCount-len(uIds) {
+		return errorx.ErrGroupMemberCount
+	}
 	t := time.Now().UnixMilli()
 	sql1 := "insert into " + d.genSessionUserTableName(session.Id) +
 		" (session_id, user_id, type, create_time, update_time) values (?, ?, ?, ?, ?) " +

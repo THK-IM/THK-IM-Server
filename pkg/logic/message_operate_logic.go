@@ -44,7 +44,7 @@ func (l *MessageLogic) ReadUserMessages(req dto.ReadUserMessageReq) error {
 }
 
 func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
-	revokeStatus := model.MsgStatusRevoke
+	revokeStatus := model.MsgStatusRevoke | model.MsgStatusRead | model.MsgStatusAcked
 	if err := l.appCtx.UserMessageModel().UpdateUserMessage(req.UId, req.SessionId, []int64{req.MessageId}, revokeStatus); err != nil {
 		l.appCtx.Logger().Errorf("RevokeUserMessage err:%d, %d, %d, %v", req.UId, req.SessionId, req.MessageId, err)
 		return err

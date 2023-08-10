@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	SingleSessionType = 1
-	GroupSessionType  = 2
+	SingleSessionType     = 1
+	GroupSessionType      = 2
+	SuperGroupSessionType = 3
 )
 
 const (

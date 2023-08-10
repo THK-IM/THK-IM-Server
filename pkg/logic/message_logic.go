@@ -100,13 +100,13 @@ func (l *MessageLogic) DelSessionMessage(req *dto.DelSessionMessageReq) error {
 }
 
 func (l *MessageLogic) SendMessage(req dto.SendMessageReq) (*dto.SendMessageRes, error) {
+	session, e1 := l.appCtx.SessionModel().FindSession(req.SessionId, nil)
+	if e1 != nil {
+		l.appCtx.Logger().Error(e1)
+		return nil, errorx.ErrInvalidSession
+	}
 	// req.FUid为0是系统消息, 不需要校验是否能对session发送消息
 	if req.FUid > 0 {
-		session, e1 := l.appCtx.SessionModel().FindSession(req.SessionId, nil)
-		if e1 != nil {
-			l.appCtx.Logger().Error(e1)
-			return nil, errorx.ErrInvalidSession
-		}
 		if session.Type != model.SingleSessionType {
 			if session.Status&model.MutedBitInSessionStatus > 0 {
 				return nil, errorx.ErrCannotSendMessage
@@ -142,7 +142,7 @@ func (l *MessageLogic) SendMessage(req dto.SendMessageReq) (*dto.SendMessageRes,
 			return nil, errSession
 		}
 	}
-	if onlineUIds, offlineUIds, err := l.publishSendMessageEvents(sessionMessage, receivers); err != nil {
+	if onlineUIds, offlineUIds, err := l.publishSendMessageEvents(sessionMessage, session.Type, receivers); err != nil {
 		return nil, errorx.ErrMessageDeliveryFailed
 	} else {
 		return &dto.SendMessageRes{
@@ -155,7 +155,7 @@ func (l *MessageLogic) SendMessage(req dto.SendMessageReq) (*dto.SendMessageRes,
 
 }
 
-func (l *MessageLogic) publishSendMessageEvents(sessionMsg *model.SessionMessage, receivers []int64) ([]int64, []int64, error) {
+func (l *MessageLogic) publishSendMessageEvents(sessionMsg *model.SessionMessage, sessionType int, receivers []int64) ([]int64, []int64, error) {
 	userMsg := &dto.Message{
 		ClientId:  sessionMsg.ClientId,
 		MsgId:     sessionMsg.MsgId,
@@ -179,10 +179,12 @@ func (l *MessageLogic) publishSendMessageEvents(sessionMsg *model.SessionMessage
 		l.appCtx.Logger().Error("pubPushMessageEvent, err:", errPubPush)
 		return nil, nil, errPubPush
 	}
-	errPubSave := l.pubSaveMsgEvent(msgJsonStr, receivers)
-	if errPubSave != nil {
-		l.appCtx.Logger().Error("pubSaveMsgEvent, err:", errPubSave)
-		return nil, nil, errPubPush
+	if sessionType != model.SuperGroupSessionType {
+		errPubSave := l.pubSaveMsgEvent(msgJsonStr, receivers)
+		if errPubSave != nil {
+			l.appCtx.Logger().Error("pubSaveMsgEvent, err:", errPubSave)
+			return nil, nil, errPubPush
+		}
 	}
 	return onlineUIds, offlineUIds, nil
 }
@@ -214,8 +216,8 @@ func (l *MessageLogic) pubSaveMsgEvent(msgBody string, receivers []int64) error 
 
 // 发布推送消息
 func (l *MessageLogic) pubPushMessageEvent(t, subType int, body string, uIds []int64) ([]int64, []int64, error) {
-	OfflineInterval := l.appCtx.Config().OfflineInterval
-	offlineTime := time.Now().UnixMilli() - OfflineInterval*int64(time.Second)
+	onlineTimeout := l.appCtx.Config().OnlineTimeout
+	offlineTime := time.Now().UnixMilli() - onlineTimeout*int64(time.Second)
 	offlineUsers := make([]int64, 0)
 	onlineUsers, err := l.appCtx.UserOnlineStatusModel().GetOnlineUsers(uIds, offlineTime)
 	if err != nil {

@@ -2,6 +2,7 @@ package logic
 
 import (
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
+	"github.com/THK-IM/THK-IM-Server/pkg/model"
 )
 
 func (l *SessionLogic) AddUser(sid int64, req dto.SessionAddUserReq) error {
@@ -9,7 +10,13 @@ func (l *SessionLogic) AddUser(sid int64, req dto.SessionAddUserReq) error {
 	if err != nil {
 		return err
 	}
-	return l.appCtx.SessionUserModel().AddUser(session, req.EntityId, req.UIds)
+	maxCount := 0
+	if session.Type == model.GroupSessionType {
+		maxCount = l.appCtx.Config().IM.MaxGroupMember
+	} else if session.Type == model.SuperGroupSessionType {
+		maxCount = l.appCtx.Config().IM.MaxSuperGroupMember
+	}
+	return l.appCtx.SessionUserModel().AddUser(session, req.EntityId, req.UIds, maxCount)
 }
 
 func (l *SessionLogic) DelUser(sid int64, req dto.SessionDelUserReq) error {
