@@ -105,7 +105,7 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityId int64, uIds 
 		return err
 	}
 	if count > maxCount-len(uIds) {
-		return errorx.ErrGroupMemberCount
+		return errorx.ErrGroupMemberCountBeyond
 	}
 	t := time.Now().UnixMilli()
 	sql1 := "insert into " + d.genSessionUserTableName(session.Id) +

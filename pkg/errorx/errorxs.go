@@ -1,21 +1,17 @@
 package errorx
 
-var ErrUserNotOnLine = New("user not on line")
-var ErrWrite = New("write msg error")
-var ErrConnClosed = New("conn closed")
-var ErrUnCatchHandler = New("unCatch handler")
-var ErrMsgBodyLen = New("error msg body len")
-var ErrMsgBodyContent = New("error msg body content")
-var ErrTokenCheckFailed = New("user token error")
-var ErrClientInvalid = New("client invalid")
+var ErrParamsError = NewErrorX(4000000, "Params Error")
 
-var ErrParamsError = New("Params Error")
-var ErrCannotSendMessage = New("Can not send message")
-var ErrInvalidSession = New("Invalid session")
-var ErrOtherRejectMessage = New("The other party refuses to receive the message")
-var ErrMessageDeliveryFailed = New("Message delivery failed")
+var ErrUserNotOnLine = NewErrorX(5000000, "User not on line")
 
-var ErrMessageFormat = New("Message format error")
-var ErrSessionType = NewErrorX(5000000, "invalid session type")
-var ErrGroupMemberCount = NewErrorX(5000000, "group member beyond")
-var ErrGroupAlreadyDeleted = NewErrorX(5000001, "group has been deleted")
+var ErrSessionType = NewErrorX(5001000, "Session type error")
+var ErrSessionInvalid = NewErrorX(5001001, "Invalid session")
+var ErrSessionMuted = NewErrorX(5001002, "Session muted")
+var ErrUserMuted = NewErrorX(5001003, "User muted")
+var ErrUserReject = NewErrorX(5001004, "user reject your message")
+
+var ErrGroupMemberCountBeyond = NewErrorX(5002001, "group member count beyond")
+var ErrGroupAlreadyDeleted = NewErrorX(5002002, "group has been deleted")
+
+var ErrMessageFormat = NewErrorX(5004000, "Message format error")
+var ErrMessageDeliveryFailed = NewErrorX(5004002, "Message delivery failed")

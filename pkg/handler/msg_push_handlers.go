@@ -93,19 +93,19 @@ func onMqPushMsgReceived(m map[string]interface{}, server websocket.Server, ctx 
 	uIdsStr, okId := m[event.PushEventReceiversKey].(string)
 	body, okBody := m[event.PushEventBodyKey].(string)
 	if !okType || !okSubType || !okId || !okBody {
-		return errorx.ErrMsgBodyContent
+		return errorx.ErrMessageFormat
 	}
 	iType, eType := strconv.Atoi(eventType)
 	if eType != nil {
-		return errorx.ErrMsgBodyContent
+		return errorx.ErrMessageFormat
 	}
 	iSubtype, eSubType := strconv.Atoi(eventSubtype)
 	if eSubType != nil {
-		return errorx.ErrMsgBodyContent
+		return errorx.ErrMessageFormat
 	}
 	uIds := make([]int64, 0)
 	if err := json.Unmarshal([]byte(uIdsStr), &uIds); err != nil {
-		return errorx.ErrMsgBodyContent
+		return errorx.ErrMessageFormat
 	}
 	if content, err := event.BuildPushBody(iType, iSubtype, body); err != nil {
 		return err
@@ -160,11 +160,11 @@ func onMqServerEventReceived(m map[string]interface{}, server websocket.Server, 
 	receivers, okReceivers := m[event.ServerEventReceiversKey].(string)
 	body, okBody := m[event.ServerEventBodyKey].(string)
 	if !okType || !okReceivers || !okBody {
-		return errorx.ErrMsgBodyContent
+		return errorx.ErrMessageFormat
 	}
 	uIds := make([]int64, 0)
 	if err := json.Unmarshal([]byte(receivers), &uIds); err != nil {
-		return errorx.ErrMsgBodyContent
+		return errorx.ErrMessageFormat
 	}
 	if tp == event.ServerEventUserOnline {
 		onlineBody := event.ParserOnlineBody(body)

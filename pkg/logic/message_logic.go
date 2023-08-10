@@ -103,27 +103,27 @@ func (l *MessageLogic) SendMessage(req dto.SendMessageReq) (*dto.SendMessageRes,
 	session, e1 := l.appCtx.SessionModel().FindSession(req.SessionId, nil)
 	if e1 != nil {
 		l.appCtx.Logger().Error(e1)
-		return nil, errorx.ErrInvalidSession
+		return nil, errorx.ErrSessionInvalid
 	}
 	// req.FUid为0是系统消息, 不需要校验是否能对session发送消息
 	if req.FUid > 0 {
 		if session.Type != model.SingleSessionType {
 			if session.Status&model.MutedBitInSessionStatus > 0 {
-				return nil, errorx.ErrCannotSendMessage
+				return nil, errorx.ErrSessionMuted
 			}
 			userSession, e2 := l.appCtx.UserSessionModel().GetUserSession(req.FUid, req.SessionId)
 			if e2 != nil {
 				l.appCtx.Logger().Error(e2)
-				return nil, errorx.ErrInvalidSession
+				return nil, errorx.ErrSessionInvalid
 			}
 			if userSession.Status&model.MutedBitInUserSessionStatus > 0 {
-				return nil, errorx.ErrCannotSendMessage
+				return nil, errorx.ErrUserMuted
 			}
 		}
 	}
 	receivers := l.appCtx.SessionUserModel().FindUIdsInSessionWithoutStatus(req.SessionId, model.RejectBitInUserSessionStatus, req.Receivers)
 	if receivers == nil || len(receivers) == 0 {
-		return nil, errorx.ErrOtherRejectMessage
+		return nil, errorx.ErrUserReject
 	}
 
 	// 根据clientId和fromUserId查询是否已经发送过消息

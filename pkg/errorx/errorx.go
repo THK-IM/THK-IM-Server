@@ -1,5 +1,7 @@
 package errorx
 
+import "fmt"
+
 type ErrorX struct {
 	Code int    `json:"code"`
 	Msg  string `json:"msg"`
@@ -14,5 +16,5 @@ func New(msg string) *ErrorX {
 }
 
 func (e *ErrorX) Error() string {
-	return e.Msg
+	return fmt.Sprintf("[code: %d, msg: %s]", e.Code, e.Msg)
 }

@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
@@ -19,11 +20,27 @@ func ResponseBadRequest(ctx *gin.Context) {
 }
 
 func ResponseInternalServerError(ctx *gin.Context, err error) {
-	rsp := &ErrorResponse{
-		Code:    http.StatusInternalServerError,
-		Message: err.Error(),
+	if e, ok := err.(*errorx.ErrorX); ok {
+		if e.Code <= 500000 {
+			rsp := &ErrorResponse{
+				Code:    e.Code,
+				Message: e.Msg,
+			}
+			ctx.JSON(http.StatusBadRequest, rsp)
+		} else {
+			rsp := &ErrorResponse{
+				Code:    e.Code,
+				Message: e.Msg,
+			}
+			ctx.JSON(http.StatusInternalServerError, rsp)
+		}
+	} else {
+		rsp := &ErrorResponse{
+			Code:    http.StatusInternalServerError,
+			Message: err.Error(),
+		}
+		ctx.JSON(http.StatusInternalServerError, rsp)
 	}
-	ctx.JSON(http.StatusInternalServerError, rsp)
 }
 
 func ResponseSuccess(ctx *gin.Context, data interface{}) {
