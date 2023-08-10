@@ -54,7 +54,7 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 			}, nil
 		}
 	} else if req.Type == model.GroupSessionType || req.Type == model.SuperGroupSessionType {
-		if len(req.Members) < 1 || req.EntityId == 0 {
+		if len(req.Members) < 1 || req.EntityId == nil {
 			return nil, errorx.ErrParamsError
 		}
 		userSession, err := l.appCtx.UserSessionModel().FindUserSessionByEntityId(req.Members[0], req.Members[1], req.Type, true)
@@ -77,7 +77,7 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 				} else if userSession.Type == model.SuperGroupSessionType {
 					maxCount = l.appCtx.Config().IM.MaxSuperGroupMember
 				}
-				if err = l.appCtx.SessionUserModel().AddUser(session, req.EntityId, members, maxCount); err != nil {
+				if err = l.appCtx.SessionUserModel().AddUser(session, *req.EntityId, members, maxCount); err != nil {
 					return nil, err
 				}
 			}
@@ -102,7 +102,7 @@ func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (*dto.CreateSe
 	if err != nil {
 		return nil, err
 	}
-	entityId := req.EntityId
+	entityId := int64(0)
 	if req.Type == model.SingleSessionType {
 		entityId = req.Members[1]
 		entityIds := []int64{req.Members[1], req.Members[0]}
@@ -112,17 +112,19 @@ func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (*dto.CreateSe
 			}
 		}
 	} else if req.Type == model.GroupSessionType {
-		if req.EntityId <= 0 {
+		if req.EntityId == nil {
 			return nil, errorx.ErrParamsError
 		}
-		if err = l.appCtx.SessionUserModel().AddUser(session, req.EntityId, req.Members, l.appCtx.Config().IM.MaxGroupMember); err != nil {
+		entityId = *req.EntityId
+		if err = l.appCtx.SessionUserModel().AddUser(session, entityId, req.Members, l.appCtx.Config().IM.MaxGroupMember); err != nil {
 			return nil, err
 		}
 	} else if req.Type == model.SuperGroupSessionType {
-		if req.EntityId <= 0 {
+		if req.EntityId == nil {
 			return nil, errorx.ErrParamsError
 		}
-		if err = l.appCtx.SessionUserModel().AddUser(session, req.EntityId, req.Members, l.appCtx.Config().IM.MaxSuperGroupMember); err != nil {
+		entityId = *req.EntityId
+		if err = l.appCtx.SessionUserModel().AddUser(session, entityId, req.Members, l.appCtx.Config().IM.MaxSuperGroupMember); err != nil {
 			return nil, err
 		}
 	} else {

@@ -17,10 +17,10 @@ func createSession(appCtx *app.Context) gin.HandlerFunc {
 			return
 		}
 
-		if req.Type == model.SingleSessionType && req.EntityId > 0 {
+		if req.Type == model.SingleSessionType && (req.EntityId != nil || len(req.Members) != 2) {
 			dto.ResponseBadRequest(ctx)
 			return
-		} else if req.Type == model.GroupSessionType && req.EntityId <= 0 {
+		} else if req.Type == model.GroupSessionType && req.EntityId == nil {
 			dto.ResponseBadRequest(ctx)
 			return
 		}

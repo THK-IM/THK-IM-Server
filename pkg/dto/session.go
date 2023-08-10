@@ -2,8 +2,8 @@ package dto
 
 type CreateSessionReq struct {
 	Type     int     `json:"type" binding:"required"`
-	EntityId int64   `json:"entity_id"`
-	Members  []int64 `json:"members" binding:"required"`
+	EntityId *int64  `json:"entity_id"`                  // type 为group或supergroup时存在，不能为
+	Members  []int64 `json:"members" binding:"required"` // 数组0位置为创建人
 }
 
 type CreateSessionRes struct {
