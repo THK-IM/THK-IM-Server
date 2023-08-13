@@ -3,22 +3,31 @@ package loader
 import (
 	"github.com/THK-IM/THK-IM-Server/pkg/conf"
 	"github.com/THK-IM/THK-IM-Server/pkg/mq"
-	"github.com/redis/go-redis/v9"
 	"github.com/sirupsen/logrus"
 )
 
-func LoadPublishers(pubConfigs []conf.Mq, clientId string, logger *logrus.Entry, client *redis.Client) map[string]mq.Publisher {
+func LoadPublishers(pubConfigs []*conf.Publisher, clientId string, logger *logrus.Entry) map[string]mq.Publisher {
 	publisherMap := make(map[string]mq.Publisher, 0)
 	for _, pubConfig := range pubConfigs {
-		publisherMap[pubConfig.Name] = mq.NewRedisPublisher(pubConfig, clientId, logger, client)
+		if pubConfig.RedisPublisher != nil {
+			client := LoadRedis(pubConfig.RedisPublisher.RedisSource)
+			publisherMap[pubConfig.Topic] = mq.NewRedisPublisher(pubConfig, clientId, logger, client)
+		} else if pubConfig.KafkaPublisher != nil {
+			publisherMap[pubConfig.Topic] = mq.NewKafkaPublisher(pubConfig, clientId, logger)
+		}
 	}
 	return publisherMap
 }
 
-func LoadSubscribers(subConfigs []conf.Mq, clientId string, logger *logrus.Entry, client *redis.Client) map[string]mq.Subscriber {
+func LoadSubscribers(subConfigs []*conf.Subscriber, clientId string, logger *logrus.Entry) map[string]mq.Subscriber {
 	subscriberMap := make(map[string]mq.Subscriber, 0)
 	for _, subConfig := range subConfigs {
-		subscriberMap[subConfig.Name] = mq.NewRedisSubscribe(subConfig, clientId, logger, client)
+		if subConfig.RedisSubscriber != nil {
+			client := LoadRedis(subConfig.RedisSubscriber.RedisSource)
+			subscriberMap[subConfig.Topic] = mq.NewRedisSubscribe(subConfig, clientId, logger, client)
+		} else if subConfig.KafkaSubscriber != nil {
+			subscriberMap[subConfig.Topic] = mq.NewKafkaSubscriber(subConfig, clientId, logger)
+		}
 	}
 	return subscriberMap
 }

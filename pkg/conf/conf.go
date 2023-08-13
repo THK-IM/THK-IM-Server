@@ -1,98 +1,131 @@
 package conf
 
 import (
+	consul "github.com/hashicorp/consul/api"
 	"gopkg.in/yaml.v3"
 	"os"
-
-	consul "github.com/hashicorp/consul/api"
 )
 
-type WebSocket struct {
-	Uri           string `yaml:"Uri"`
-	MaxClient     int64  `yaml:"MaxClient"`
-	MultiPlatform int    `yaml:"MultiPlatform"` // 0:不允许跨平台, -1:随意跨平台, 1:一个平台只能登录一台设备
-}
+type (
+	WebSocket struct {
+		Uri           string `yaml:"Uri"`
+		MaxClient     int64  `yaml:"MaxClient"`
+		MultiPlatform int    `yaml:"MultiPlatform"` // 0:不允许跨平台, -1:随意跨平台, 1:一个平台只能登录一台设备
+	}
 
-type Logg struct {
-	IndexName   string `yaml:"IndexName"`
-	Dir         string `yaml:"Dir"`
-	Level       string `yaml:"Level"`
-	RetainAge   int    `yaml:"RetainAge"`   // 日志文件保留时间,单位:小时
-	RotationAge int    `yaml:"RotationAge"` // 日志文件翻转时间,单位:小时
-}
+	Logg struct {
+		IndexName   string `yaml:"IndexName"`
+		Dir         string `yaml:"Dir"`
+		Level       string `yaml:"Level"`
+		RetainAge   int    `yaml:"RetainAge"`   // 日志文件保留时间,单位:小时
+		RotationAge int    `yaml:"RotationAge"` // 日志文件翻转时间,单位:小时
+	}
 
-type Sdk struct {
-	Name     string `yaml:"Name"`
-	Endpoint string `yaml:"Endpoint"`
-}
+	Sdk struct {
+		Name     string `yaml:"Name"`
+		Endpoint string `yaml:"Endpoint"`
+	}
 
-type Model struct {
-	Name   string `yaml:"Name""`
-	Shards int64  `yaml:"Shards"`
-}
+	Model struct {
+		Name   string `yaml:"Name""`
+		Shards int64  `yaml:"Shards"`
+	}
 
-type Database struct {
-	Endpoint        string `yaml:"Endpoint"`
-	Uri             string `yaml:"Uri"`
-	MaxIdleConn     int    `yaml:"MaxIdleConn"`
-	MaxOpenConn     int    `yaml:"MaxOpenConn"`
-	ConnMaxLifeTime int64  `yaml:"ConnMaxLifeTime"` // 单位:秒
-	ConnMaxIdleTime int64  `yaml:"ConnMaxIdleTime"` // 单位:秒
-}
+	DataSource struct {
+		Endpoint        string `yaml:"Endpoint"`
+		Uri             string `yaml:"Uri"`
+		MaxIdleConn     int    `yaml:"MaxIdleConn"`
+		MaxOpenConn     int    `yaml:"MaxOpenConn"`
+		ConnMaxLifeTime int64  `yaml:"ConnMaxLifeTime"` // 单位:秒
+		ConnMaxIdleTime int64  `yaml:"ConnMaxIdleTime"` // 单位:秒
+	}
 
-type RedisCache struct {
-	Endpoint        string `yaml:"Endpoint"`
-	Uri             string `yaml:"Uri"`
-	MaxIdleConn     int    `yaml:"MaxIdleConn"`
-	MaxOpenConn     int    `yaml:"MaxOpenConn"`
-	ConnMaxLifeTime int64  `yaml:"ConnMaxLifeTime"` // 单位:秒
-	ConnMaxIdleTime int64  `yaml:"ConnMaxIdleTime"` // 单位:秒
-	ConnTimeout     int64  `yaml:"ConnTimeout"`     // 单位:秒
-}
+	RedisSource struct {
+		Endpoint        string `yaml:"Endpoint"`
+		Uri             string `yaml:"Uri"`
+		MaxIdleConn     int    `yaml:"MaxIdleConn"`
+		MaxOpenConn     int    `yaml:"MaxOpenConn"`
+		ConnMaxLifeTime int64  `yaml:"ConnMaxLifeTime"` // 单位:秒
+		ConnMaxIdleTime int64  `yaml:"ConnMaxIdleTime"` // 单位:秒
+		ConnTimeout     int64  `yaml:"ConnTimeout"`     // 单位:秒
+	}
 
-type Metric struct {
-	Endpoint     string `yaml:"Endpoint"`
-	PushGateway  string `yaml:"PushGateway"`
-	PushInterval int64  `yaml:"PushInterval"`
-}
+	Metric struct {
+		Endpoint     string `yaml:"Endpoint"`
+		PushGateway  string `yaml:"PushGateway"`
+		PushInterval int64  `yaml:"PushInterval"`
+	}
 
-type Node struct {
-	MaxCount        int64 `yaml:"MaxCount"`        // 最大工作节点数
-	PollingInterval int64 `yaml:"PollingInterval"` // 维持工作节点间隔
-}
+	Node struct {
+		MaxCount        int64 `yaml:"MaxCount"`        // 最大工作节点数
+		PollingInterval int64 `yaml:"PollingInterval"` // 维持工作节点间隔
+	}
 
-type Mq struct {
-	Engine    string `yaml:"Engine"`
-	Name      string `yaml:"Name"`
-	Topic     string `yaml:"Topic"`
-	Group     string `yaml:"Group"`
-	MaxLen    int64  `yaml:"MaxLen"`
-	RetryTime int64  `yaml:"RetryTime"`
-}
+	KafkaPublisher struct {
+		Brokers    string `yaml:"Brokers"`
+		RequireAck int    `yaml:"RequireAck"`
+		BatchSize  int    `yaml:"BatchSize"`
+		Async      bool   `yaml:"Async"`
+	}
 
-type IM struct {
-	MaxGroupMember      int `yaml:"MaxGroupMember"`
-	MaxSuperGroupMember int `yaml:"MaxSuperGroupMember"`
-}
+	RedisPublisher struct {
+		MaxQueueLen int64        `yaml:"MaxQueueLen"`
+		RedisSource *RedisSource `yaml:"RedisSource"`
+	}
 
-type Config struct {
-	Name          string      `yaml:"Name"`
-	Host          string      `yaml:"Host"`
-	Port          string      `yaml:"Port"`
-	Mode          string      `yaml:"Mode"`
-	OnlineTimeout int64       `yaml:"OnlineTimeout"` // 单位 秒
-	IM            *IM         `yaml:"IM"`
-	WebSocket     *WebSocket  `yaml:"WebSocket"`
-	Logg          *Logg       `yaml:"Logg"`
-	Sdks          []Sdk       `yaml:"Sdks"`
-	Node          *Node       `yaml:"Node"`
-	Database      *Database   `yaml:"DataSource"`
-	RedisCache    *RedisCache `yaml:"RedisCache"`
-	Models        []Model     `yaml:"Models"`
-	Metric        *Metric     `yaml:"Metric"`
-	Publishes     []Mq        `yaml:"Publishes"`
-	Subscribers   []Mq        `yaml:"Subscribers"`
-}
+	Publisher struct {
+		Topic          string          `yaml:"Topic"`
+		KafkaPublisher *KafkaPublisher `yaml:"KafkaPublisher"`
+		RedisPublisher *RedisPublisher `yaml:"RedisPublisher"`
+	}
+
+	RedisSubscriber struct {
+		RedisSource *RedisSource `yaml:"RedisSource"`
+		RetryTime   int64        `yaml:"RetryTime"`
+	}
+
+	KafkaSubscriber struct {
+		Brokers           string `yaml:"Brokers"`
+		Partition         int    `yaml:"Partition"`
+		NumPartitions     int    `yaml:"NumPartitions"`
+		ReplicationFactor int    `yaml:"ReplicationFactor"`
+	}
+
+	Subscriber struct {
+		Topic           string           `yaml:"Topic"`
+		Group           *string          `yaml:"Group"`
+		RedisSubscriber *RedisSubscriber `yaml:"RedisSubscriber"`
+		KafkaSubscriber *KafkaSubscriber `yaml:"KafkaSubscriber"`
+	}
+
+	MsgQueue struct {
+		Publishers  []*Publisher  `yaml:"Publishers"`
+		Subscribers []*Subscriber `yaml:"Subscribers"`
+	}
+
+	IM struct {
+		OnlineTimeout       int64 `yaml:"OnlineTimeout"`
+		MaxGroupMember      int   `yaml:"MaxGroupMember"`
+		MaxSuperGroupMember int   `yaml:"MaxSuperGroupMember"`
+	}
+
+	Config struct {
+		Name        string       `yaml:"Name"`
+		Host        string       `yaml:"Host"`
+		Port        string       `yaml:"Port"`
+		Mode        string       `yaml:"Mode"`
+		IM          *IM          `yaml:"IM"`
+		WebSocket   *WebSocket   `yaml:"WebSocket"`
+		Logg        *Logg        `yaml:"Logg"`
+		Sdks        []Sdk        `yaml:"Sdks"`
+		Node        *Node        `yaml:"Node"`
+		DataSource  *DataSource  `yaml:"DataSource"`
+		RedisSource *RedisSource `yaml:"RedisSource"`
+		Models      []Model      `yaml:"Models"`
+		Metric      *Metric      `yaml:"Metric"`
+		MsgQueue    MsgQueue     `yaml:"MsgQueue"`
+	}
+)
 
 func Load(f string) (c Config, err error) {
 	data, e := os.ReadFile(f)

@@ -58,6 +58,18 @@ func RegisterMsgPushHandlers(ctx *app.Context) {
 				ctx.Logger().Errorf("OnClientConnected: %s", err.Error())
 			}
 		}
+		// 发送用户上线事件
+		{
+			if userOnlineEvent, err := event.BuildUserOnlineEvent(ctx.NodeId(), true,
+				client.Info().UId, client.Info().Id, client.Info().Platform); err != nil {
+				ctx.Logger().Error("UserOnlineEvent Build err:", err)
+			} else {
+				if err = ctx.ServerEventPublisher().Pub(fmt.Sprintf("uid-%d", client.Info().UId), userOnlineEvent); err != nil {
+					ctx.Logger().Error("UserOnlineEvent Pub err:", err)
+				}
+			}
+		}
+		// rpc通知api服务用户上线
 		{
 			sendUserOnlineStatus(ctx, client, true)
 		}
@@ -169,8 +181,8 @@ func onMqServerEventReceived(m map[string]interface{}, server websocket.Server, 
 	if tp == event.ServerEventUserOnline {
 		onlineBody := event.ParserOnlineBody(body)
 		if onlineBody != nil {
-			if e := server.KickOffClient(onlineBody.UserId, onlineBody.ConnId, onlineBody.Platform); e != nil {
-				ctx.Logger().Error("KickOffClient, err:", e, " onlineBody: ", onlineBody)
+			if e := server.OnUserConnected(onlineBody.UserId, onlineBody.ConnId, onlineBody.Platform); e != nil {
+				ctx.Logger().Error("OnUserConnected, err:", e, " onlineBody: ", onlineBody)
 			}
 		} else {
 			ctx.Logger().Error("ServerEventUserOnline, onlineBody is nil, body is: ", body)

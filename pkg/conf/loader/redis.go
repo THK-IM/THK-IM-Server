@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func LoadDataCache(source *conf.RedisCache) *redis.Client {
+func LoadRedis(source *conf.RedisSource) *redis.Client {
 	if source == nil {
 		return nil
 	}

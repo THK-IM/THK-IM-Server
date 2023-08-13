@@ -9,9 +9,7 @@ import (
 
 type (
 	RedisPublisher struct {
-		name     string
 		stream   string
-		group    string
 		clientId string
 		maxLen   int64
 		client   *redis.Client
@@ -24,17 +22,15 @@ func (d RedisPublisher) Pub(id string, msg map[string]interface{}) error {
 	err := d.client.XAdd(ctx, &redis.XAddArgs{
 		Stream: d.stream,
 		MaxLen: d.maxLen,
-		ID:     id,
+		ID:     "",
 		Values: msg,
 	}).Err()
 	return err
 }
 
-func NewRedisPublisher(config conf.Mq, clientId string, logger *logrus.Entry, client *redis.Client) Publisher {
+func NewRedisPublisher(config *conf.Publisher, clientId string, logger *logrus.Entry, client *redis.Client) Publisher {
 	return RedisPublisher{
-		name:     config.Name,
-		group:    config.Group,
-		maxLen:   config.MaxLen,
+		maxLen:   config.RedisPublisher.MaxQueueLen,
 		stream:   config.Topic,
 		clientId: clientId,
 		logger:   logger,

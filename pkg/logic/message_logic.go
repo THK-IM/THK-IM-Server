@@ -2,6 +2,7 @@ package logic
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/app"
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
 	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
@@ -173,14 +174,13 @@ func (l *MessageLogic) publishSendMessageEvents(sessionMsg *model.SessionMessage
 		return nil, nil, err
 	}
 	msgJsonStr := string(msgJson)
-
-	onlineUIds, offlineUIds, errPubPush := l.pubPushMessageEvent(event.PushMsgEventType, 0, msgJsonStr, receivers)
+	onlineUIds, offlineUIds, errPubPush := l.pubPushMessageEvent(event.PushMsgEventType, 0, msgJsonStr, receivers, &userMsg.SessionId)
 	if errPubPush != nil {
 		l.appCtx.Logger().Error("pubPushMessageEvent, err:", errPubPush)
 		return nil, nil, errPubPush
 	}
 	if sessionType != model.SuperGroupSessionType {
-		errPubSave := l.pubSaveMsgEvent(msgJsonStr, receivers)
+		errPubSave := l.pubSaveMsgEvent(msgJsonStr, receivers, userMsg.SessionId)
 		if errPubSave != nil {
 			l.appCtx.Logger().Error("pubSaveMsgEvent, err:", errPubSave)
 			return nil, nil, errPubPush
@@ -192,7 +192,7 @@ func (l *MessageLogic) publishSendMessageEvents(sessionMsg *model.SessionMessage
 // PushMessage 业务消息推送
 func (l *MessageLogic) PushMessage(req dto.PushMessageReq) (*dto.PushMessageRes, error) {
 	// 在线推送
-	onlineUIds, offlineUIds, err := l.pubPushMessageEvent(req.Type, req.SubType, req.Body, req.UIds)
+	onlineUIds, offlineUIds, err := l.pubPushMessageEvent(req.Type, req.SubType, req.Body, req.UIds, nil)
 	if err == nil {
 		rsp := &dto.PushMessageRes{}
 		rsp.OnlineUIds = onlineUIds
@@ -203,20 +203,20 @@ func (l *MessageLogic) PushMessage(req dto.PushMessageReq) (*dto.PushMessageRes,
 	}
 }
 
-func (l *MessageLogic) pubSaveMsgEvent(msgBody string, receivers []int64) error {
+func (l *MessageLogic) pubSaveMsgEvent(msgBody string, receivers []int64, sessionId int64) error {
 	if receiversStr, errJson := json.Marshal(receivers); errJson != nil {
 		return errJson
 	} else {
 		m := make(map[string]interface{})
 		m[event.SaveMsgEventKey] = msgBody
 		m[event.SaveMsgUsersKey] = receiversStr
-		return l.appCtx.MsgSaverPublisher().Pub("", m)
+		return l.appCtx.MsgSaverPublisher().Pub(fmt.Sprintf("session-%d", sessionId), m)
 	}
 }
 
 // 发布推送消息
-func (l *MessageLogic) pubPushMessageEvent(t, subType int, body string, uIds []int64) ([]int64, []int64, error) {
-	onlineTimeout := l.appCtx.Config().OnlineTimeout
+func (l *MessageLogic) pubPushMessageEvent(t, subType int, body string, uIds []int64, sessionId *int64) ([]int64, []int64, error) {
+	onlineTimeout := l.appCtx.Config().IM.OnlineTimeout
 	offlineTime := time.Now().UnixMilli() - onlineTimeout*int64(time.Second)
 	offlineUsers := make([]int64, 0)
 	onlineUsers, err := l.appCtx.UserOnlineStatusModel().GetOnlineUsers(uIds, offlineTime)
@@ -244,7 +244,13 @@ func (l *MessageLogic) pubPushMessageEvent(t, subType int, body string, uIds []i
 		m[event.PushEventBodyKey] = body
 		m[event.PushEventReceiversKey] = string(receiverStr)
 
-		err = l.appCtx.MsgPusherPublisher().Pub("", m)
+		idKey := ""
+		if sessionId != nil {
+			idKey = fmt.Sprintf("message-%d", *sessionId)
+		} else {
+			idKey = fmt.Sprintf("push-%d-%d", t, subType)
+		}
+		err = l.appCtx.MsgPusherPublisher().Pub(idKey, m)
 		return onlineUsers, offlineUsers, err
 	}
 }

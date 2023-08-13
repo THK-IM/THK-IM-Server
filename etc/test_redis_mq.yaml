@@ -1,15 +1,4 @@
-Name: msg_push_server
-Host: 0.0.0.0
-Port: 18002
-Mode: debug
-IM:
-  OnlineTimeout: 20
-  MaxGroupMember: 500
-  MaxSuperGroupMember: 100000
-WebSocket:
-  Uri: "/ws"
-  MaxClient: 50000
-  MultiPlatform: 0
+Name: test_redis_mq
 Node:
   MaxCount: 1024
   PollingInterval: 15
@@ -24,35 +13,6 @@ RedisSource:
   MaxOpenConn: 16
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
-DataSource:
-  Endpoint: "{{mysql_endpoint}}"
-  Uri: "/thk_im?charset=utf8mb4&parseTime=True&loc=Local"
-  MaxIdleConn: 10
-  MaxOpenConn: 20
-  ConnMaxLifeTime: 3600
-  ConnMaxIdleTime: 3600
-Models:
-  - Name: "session"
-    Shards: 5
-  - Name: "user_session"
-    Shards: 5
-  - Name: "session_user"
-    Shards: 5
-  - Name: "session_message"
-    Shards: 5
-  - Name: "user_message"
-    Shards: 5
-  - Name: "user_online_status"
-    Shards: 1
-Metric:
-  Endpoint: "/metrics"
-  PushGateway: ""
-  PushInterval: 10
-Sdks:
-  - Name: msg-api
-    Endpoint: "http://127.0.0.1:18000"
-  - Name: user-api
-    Endpoint: "http://127.0.0.1:18000"
 MsgQueue:
   Publishers:
     - Topic: "push_msg"
@@ -65,7 +25,7 @@ MsgQueue:
           MaxOpenConn: 4
           ConnMaxLifeTime: 3600
           ConnMaxIdleTime: 3600
-    - Topic: "server_event"
+    - Topic: "save_msg"
       RedisPublisher:
         MaxQueueLen: 100000
         RedisSource:
@@ -86,7 +46,8 @@ MsgQueue:
           ConnMaxLifeTime: 3600
           ConnMaxIdleTime: 3600
         RetryTime: 10
-    - Topic: "server_event"
+    - Topic: "save_msg"
+      Group: "storage"
       RedisSubscriber:
         RedisSource:
           Endpoint: "{{redis_endpoint}}"
@@ -96,4 +57,3 @@ MsgQueue:
           ConnMaxLifeTime: 3600
           ConnMaxIdleTime: 3600
         RetryTime: 10
-

@@ -11,11 +11,9 @@ import (
 
 type (
 	redisSubscriber struct {
-		name      string
 		stream    string
-		group     string
+		group     *string
 		clientId  string
-		maxLen    int64
 		retryTime int64
 		client    *redis.Client
 		logger    *logrus.Entry
@@ -24,7 +22,7 @@ type (
 
 func (d redisSubscriber) Sub(
 	onMessageReceived OnMessageReceived) {
-	if d.group == "" {
+	if d.group == nil {
 		d.subscribe(onMessageReceived)
 	} else {
 		d.groupSubscribe(onMessageReceived)
@@ -61,14 +59,14 @@ func (d redisSubscriber) createGroupIfNeeded() {
 	groups, _ := d.infoGroups()
 	existed := false
 	for _, group := range groups {
-		if group.Name == d.group {
+		if group.Name == *d.group {
 			existed = true
 			break
 		}
 	}
 	if !existed {
 		ctx := context.Background()
-		err := d.client.XGroupCreateMkStream(ctx, d.stream, d.group, "0").Err()
+		err := d.client.XGroupCreateMkStream(ctx, d.stream, *d.group, "0").Err()
 		if err != nil {
 			d.logger.Error(err)
 			panic(err)
@@ -83,7 +81,7 @@ func (d redisSubscriber) groupSubscribe(onMessageReceived OnMessageReceived) {
 	go func() {
 		for {
 			if entries, err := d.client.XReadGroup(ctx, &redis.XReadGroupArgs{
-				Group:    d.group,
+				Group:    *d.group,
 				Consumer: d.clientId,
 				Streams:  []string{d.stream, lastId},
 				Count:    1,
@@ -108,7 +106,7 @@ func (d redisSubscriber) pendingMessage(onMessageReceived OnMessageReceived) {
 		for range ticker.C {
 			if pendingInfos, err := d.client.XPendingExt(ctx, &redis.XPendingExtArgs{
 				Stream:   d.stream,
-				Group:    d.group,
+				Group:    *d.group,
 				Consumer: d.clientId,
 				Start:    "-",
 				End:      "+",
@@ -136,20 +134,13 @@ func (d redisSubscriber) retryConsume(id string, onMessageReceived OnMessageRece
 func (d redisSubscriber) consumeMessages(messages []redis.XMessage, onMessageReceived OnMessageReceived) {
 	ctx := context.Background()
 	for _, msg := range messages {
-		// messageID := msg.ID
-		// eventDescription := fmt.Sprintf("%v", values["whatHappened"])
-		// ticketID := fmt.Sprintf("%v", values["ticketID"])
-		// ticketData := fmt.Sprintf("%v", values["ticketData"])
 		if err := onMessageReceived(msg.Values); err == nil {
-			if d.group != "" {
-				d.client.XAck(ctx, d.stream, d.group, msg.ID)
+			if d.group != nil {
+				d.client.XAck(ctx, d.stream, *d.group, msg.ID)
 			}
 		} else {
-			d.logger.Error(
-				fmt.Sprintf("subscribe group: %s, client id: %s, msgId: %s, values: %v",
-					d.group, d.clientId, msg.ID, msg.Values,
-				),
-			)
+			d.logger.Error(fmt.Sprintf("group: %v, client id: %s, msgId: %s, values: %v",
+				d.group, d.clientId, msg.ID, msg.Values))
 		}
 	}
 }
@@ -160,15 +151,13 @@ func (d redisSubscriber) consumeXStreams(entries []redis.XStream, onMessageRecei
 	}
 }
 
-func NewRedisSubscribe(config conf.Mq, clientId string, logger *logrus.Entry, client *redis.Client) Subscriber {
+func NewRedisSubscribe(config *conf.Subscriber, clientId string, logger *logrus.Entry, client *redis.Client) Subscriber {
 	return redisSubscriber{
-		name:      config.Name,
-		group:     config.Group,
-		maxLen:    config.MaxLen,
-		stream:    config.Topic,
-		retryTime: config.RetryTime,
 		clientId:  clientId,
 		logger:    logger,
 		client:    client,
+		group:     config.Group,
+		stream:    config.Topic,
+		retryTime: config.RedisSubscriber.RetryTime,
 	}
 }

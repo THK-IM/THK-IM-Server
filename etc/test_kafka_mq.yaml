@@ -1,0 +1,43 @@
+Name: test_kafka_mq
+Node:
+  MaxCount: 1024
+  PollingInterval: 15
+Logg:
+  Dir: logs
+  RetainAge: 720
+  RotationAge: 1
+RedisSource:
+  Endpoint: "{{redis_endpoint}}"
+  Uri: "/0"
+  MaxIdleConn: 8
+  MaxOpenConn: 16
+  ConnMaxLifeTime: 3600
+  ConnMaxIdleTime: 3600
+MsgQueue:
+  Publishers:
+    - Topic: "push_msg"
+      KafkaPublisher:
+        Brokers: "localhost:9192,localhost:9292,localhost:9392"
+        RequireAck: 0
+        BatchSize: 100
+        Async: true
+    - Topic: "save_msg"
+      KafkaPublisher:
+        Brokers: "localhost:9192,localhost:9292,localhost:9392"
+        RequireAck: 1
+        BatchSize: 1
+        Async: false
+  Subscribers:
+    - Topic: "push_msg"
+      KafkaSubscriber:
+        Brokers: "localhost:9192,localhost:9292,localhost:9392"
+        Partition: 0
+        NumPartitions: 1
+        ReplicationFactor: 1
+    - Topic: "save_msg"
+      Group: "storage"
+      KafkaSubscriber:
+        Brokers: "localhost:9192,localhost:9292,localhost:9392"
+        Partition: 0
+        NumPartitions: 10
+        ReplicationFactor: 2

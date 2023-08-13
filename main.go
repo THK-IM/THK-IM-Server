@@ -24,7 +24,7 @@ func getConsul() (endpoint, key string) {
 	}
 }
 
-func initConfig() conf.Config {
+func initConfig() *conf.Config {
 	var (
 		config conf.Config
 		err    error
@@ -41,7 +41,7 @@ func initConfig() conf.Config {
 			panic(fmt.Sprintf("config read error: %v", err))
 		}
 	}
-	return config
+	return &config
 }
 
 func initMsgApiServer(appCtx *app.Context) {

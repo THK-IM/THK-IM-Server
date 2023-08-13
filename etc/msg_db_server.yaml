@@ -1,11 +1,15 @@
 Name: msg_db_server
 Host: 0.0.0.0
-Port: 18001
+Port: 18002
 Mode: debug
-OnlineTimeout: 20
 IM:
+  OnlineTimeout: 20
   MaxGroupMember: 500
   MaxSuperGroupMember: 100000
+WebSocket:
+  Uri: "/ws"
+  MaxClient: 50000
+  MultiPlatform: 0
 Node:
   MaxCount: 1024
   PollingInterval: 15
@@ -13,30 +17,43 @@ Logg:
   Dir: logs
   RetainAge: 720
   RotationAge: 1
-RedisCache:
+RedisSource:
   Endpoint: "{{redis_endpoint}}"
   Uri: "/0"
-  MaxIdleConn: 10
-  MaxOpenConn: 20
+  MaxIdleConn: 8
+  MaxOpenConn: 16
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
 DataSource:
   Endpoint: "{{mysql_endpoint}}"
   Uri: "/thk_im?charset=utf8mb4&parseTime=True&loc=Local"
   MaxIdleConn: 10
-  MaxOpenConn: 50
+  MaxOpenConn: 20
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
 Models:
   - Name: "user_message"
-    Shards: 100
+    Shards: 5
 Metric:
   Endpoint: "/metrics"
   PushGateway: ""
   PushInterval: 10
-Subscribers:
-  - Name: "save_msg"
-    Topic: "save_msg"
-    Group: "group_mysql"
-    RetryTime: 5
-    Engine: "redis"
+Sdks:
+  - Name: msg-api
+    Endpoint: "http://127.0.0.1:18000"
+  - Name: user-api
+    Endpoint: "http://127.0.0.1:18000"
+MsgQueue:
+  Subscribers:
+    - Topic: "save_msg"
+      Group: "storage"
+      RedisSubscriber:
+        RedisSource:
+          Endpoint: "{{redis_endpoint}}"
+          Uri: "/0"
+          MaxIdleConn: 2
+          MaxOpenConn: 4
+          ConnMaxLifeTime: 3600
+          ConnMaxIdleTime: 3600
+        RetryTime: 10
+

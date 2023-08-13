@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-func LoadDataBase(source *conf.Database) *gorm.DB {
+func LoadDataBase(source *conf.DataSource) *gorm.DB {
 	if source == nil {
 		return nil
 	}

@@ -11,4 +11,10 @@ docker build -t thk-im-server/msg_push_server:v1  -f ./deploy/push_server.docker
 ## 单元测试
 go test -v test/*.go
 
-go test -v test/redis_mq_test.go -run TestRedisMqBroadcastSubscribe
+go test -v test/mq_test.go -run TestRedisBroadcastSubscribe
+
+go test -v test/mq_test.go -run TestRedisGroupSubscribe
+
+go test -v test/mq_test.go -run TestKafkaBroadcastSubscribe
+
+go test -v test/mq_test.go -run TestKafkaGroupSubscribe

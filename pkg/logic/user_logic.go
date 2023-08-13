@@ -42,7 +42,7 @@ func (l *UserLogic) UpdateUserOnlineStatus(req *dto.PostUserOnlineReq) error {
 
 func (l *UserLogic) GetUsersOnlineStatus(uIds []int64) (*dto.GetUsersOnlineStatusRes, error) {
 	usersOnlineStatus, err := l.appCtx.UserOnlineStatusModel().GetUsersOnlineStatus(uIds)
-	onlineTimeout := l.appCtx.Config().OnlineTimeout
+	onlineTimeout := l.appCtx.Config().IM.OnlineTimeout
 	if err != nil {
 		return nil, err
 	} else {

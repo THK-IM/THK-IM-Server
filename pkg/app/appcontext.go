@@ -19,7 +19,7 @@ import (
 type Context struct {
 	startTime       int64
 	nodeId          int64
-	config          conf.Config
+	config          *conf.Config
 	logger          *logrus.Entry
 	redisCache      *redis.Client
 	database        *gorm.DB
@@ -65,7 +65,7 @@ func (c *Context) NodeId() int64 {
 	return c.nodeId
 }
 
-func (c *Context) Config() conf.Config {
+func (c *Context) Config() *conf.Config {
 	return c.config
 }
 
@@ -129,12 +129,12 @@ func (c *Context) Logger() *logrus.Entry {
 	return c.logger
 }
 
-func NewAppContext(config conf.Config, httpEngine *gin.Engine) *Context {
+func NewAppContext(config *conf.Config, httpEngine *gin.Engine) *Context {
 	logger := loader.LoadLogg(config.Name, config.Logg)
 	// gin.DefaultWriter = logger.WriterLevel(logrus.InfoLevel)
 	// gin.DefaultErrorWriter = logger.WriterLevel(logrus.ErrorLevel)
 
-	redisCache := loader.LoadDataCache(config.RedisCache)
+	redisCache := loader.LoadRedis(config.RedisSource)
 	id, startTime := loader.LoadNodeId(config, redisCache)
 	snowflakeNode, err := snowflake.NewNode(id)
 	if err != nil {
@@ -150,18 +150,18 @@ func NewAppContext(config conf.Config, httpEngine *gin.Engine) *Context {
 		redisCache:    redisCache,
 		snowflakeNode: snowflakeNode,
 	}
-	if config.Database != nil {
-		ctx.database = loader.LoadDataBase(config.Database)
+	if config.DataSource != nil {
+		ctx.database = loader.LoadDataBase(config.DataSource)
 		if config.Models != nil {
 			ctx.modelMap = loader.LoadModels(config.Models, ctx.database, logger, snowflakeNode)
 		}
 	}
 	nodeIdStr := fmt.Sprintf("%d", id)
-	if config.Publishes != nil {
-		ctx.publisherMap = loader.LoadPublishers(config.Publishes, nodeIdStr, logger, redisCache)
+	if config.MsgQueue.Publishers != nil {
+		ctx.publisherMap = loader.LoadPublishers(config.MsgQueue.Publishers, nodeIdStr, logger)
 	}
-	if config.Subscribers != nil {
-		ctx.subscriberMap = loader.LoadSubscribers(config.Subscribers, nodeIdStr, logger, redisCache)
+	if config.MsgQueue.Subscribers != nil {
+		ctx.subscriberMap = loader.LoadSubscribers(config.MsgQueue.Subscribers, nodeIdStr, logger)
 	}
 	if config.Sdks != nil {
 		ctx.rpcMap = loader.LoadSdks(config.Sdks, logger)

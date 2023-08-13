@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS `session_message_%s`
     `update_time`  BIGINT           DEFAULT 0 COMMENT '更新时间',
     `deleted`      TINYINT NOT NULL DEFAULT 0 COMMENT '消息删除状态',
     INDEX `SESSION_MESSAGE_S_IDX` (`session_id`),
+    INDEX `USER_MESSAGE_CTIME_IDX` (`create_time`),
     UNIQUE INDEX `SESSION_MESSAGE_IDX` (`session_id`, `msg_id`),
     UNIQUE INDEX `SESSION_CLIENT_MESSAGE_IDX` (`session_id`, `from_user_id`, `client_id`)
 );

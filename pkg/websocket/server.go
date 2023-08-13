@@ -35,18 +35,18 @@ type Server interface {
 	SetOnClientMsgReceived(r OnClientMsgReceived)
 	AddClient(uid int64, client Client) (err error)
 	RemoveClient(uid int64, reason string, client Client) error
-	KickOffClient(uid int64, connId int64, platform string) error
+	OnUserConnected(uid int64, connId int64, platform string) error
 	SendMessage(uid int64, msg string) (err error)
 	SendMessageToUsers(uIds []int64, msg string) (err error)
 }
 
 type WsServer struct {
+	g                   *gin.Engine
 	mode                string
+	conf                *conf.WebSocket
 	mutex               *sync.RWMutex
 	logger              *logrus.Entry // 日志打印
 	curCount            *atomic.Int64
-	conf                *conf.WebSocket
-	g                   *gin.Engine
 	OnClientMsgReceived OnClientMsgReceived
 	snowflakeNode       *snowflake.Node
 	GetUidByToken       UidGetter
@@ -60,12 +60,12 @@ func NewServer(conf *conf.WebSocket, logger *logrus.Entry, g *gin.Engine, snowfl
 	curCount.Store(0)
 	mutex := &sync.RWMutex{}
 	return &WsServer{
+		g:             g,
 		mode:          mode,
 		logger:        logger,
 		conf:          conf,
 		curCount:      curCount,
 		mutex:         mutex,
-		g:             g,
 		snowflakeNode: snowflakeNode,
 		userClients:   make(map[int64][]Client, 0),
 	}
@@ -129,7 +129,7 @@ func (server *WsServer) RemoveClient(uid int64, reason string, client Client) (e
 	return err
 }
 
-func (server *WsServer) KickOffClient(uid int64, connId int64, platform string) error {
+func (server *WsServer) OnUserConnected(uid int64, connId int64, platform string) error {
 	server.mutex.RLock()
 	clients, ok := server.userClients[uid]
 	server.mutex.RUnlock()
@@ -138,12 +138,12 @@ func (server *WsServer) KickOffClient(uid int64, connId int64, platform string) 
 			if client.Info().Id != connId {
 				if server.conf.MultiPlatform == 0 {
 					if err := server.RemoveClient(uid, "connect at other device", client); err != nil {
-						server.logger.Error("KickOffClient RemoveClient err: ", err)
+						server.logger.Error("OnUserConnected RemoveClient err: ", err)
 					}
 				} else if server.conf.MultiPlatform == 1 {
 					if client.Info().Platform == platform {
 						if err := server.RemoveClient(uid, "connect at other device", client); err != nil {
-							server.logger.Error("KickOffClient RemoveClient err: ", err)
+							server.logger.Error("OnUserConnected RemoveClient err: ", err)
 						}
 					}
 				}

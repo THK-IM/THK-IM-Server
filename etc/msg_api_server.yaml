@@ -1,11 +1,15 @@
 Name: msg_api_server
 Host: 0.0.0.0
-Port: 18000
+Port: 18002
 Mode: debug
-OnlineTimeout: 20
 IM:
+  OnlineTimeout: 20
   MaxGroupMember: 500
   MaxSuperGroupMember: 100000
+WebSocket:
+  Uri: "/ws"
+  MaxClient: 50000
+  MultiPlatform: 0
 Node:
   MaxCount: 1024
   PollingInterval: 15
@@ -13,18 +17,18 @@ Logg:
   Dir: logs
   RetainAge: 720
   RotationAge: 1
-RedisCache:
+RedisSource:
   Endpoint: "{{redis_endpoint}}"
   Uri: "/0"
-  MaxIdleConn: 10
-  MaxOpenConn: 20
+  MaxIdleConn: 8
+  MaxOpenConn: 16
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
 DataSource:
   Endpoint: "{{mysql_endpoint}}"
   Uri: "/thk_im?charset=utf8mb4&parseTime=True&loc=Local"
   MaxIdleConn: 10
-  MaxOpenConn: 50
+  MaxOpenConn: 20
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
 Models:
@@ -45,34 +49,29 @@ Metric:
   PushGateway: ""
   PushInterval: 10
 Sdks:
+  - Name: msg-api
+    Endpoint: "http://127.0.0.1:18000"
   - Name: user-api
     Endpoint: "http://127.0.0.1:18000"
-Publishes:
-  - Name: "push_msg"
-    Topic: "push_msg"
-    MaxQueueLen: 1000
-    Engine: "redis"
-  - Name: "save_msg"
-    Topic: "save_msg"
-    MaxQueueLen: 10000
-    Engine: "redis"
-  - Name: "server_event"
-    Topic: "server_event"
-    MaxQueueLen: 1000
-    Engine: "redis"
-Subscribers:
-  - Name: "push_msg"
-    Topic: "push_msg"
-    Group: ""
-    RetryTime: 5
-    Engine: "redis"
-  - Name: "save_msg"
-    Topic: "save_msg"
-    Group: "group_mysql"
-    RetryTime: 5
-    Engine: "redis"
-  - Name: "server_event"
-    Topic: "server_event"
-    Group: ""
-    RetryTime: 5
-    Engine: "redis"
+MsgQueue:
+  Publishers:
+    - Topic: "push_msg"
+      RedisPublisher:
+        MaxQueueLen: 100000
+        RedisSource:
+          Endpoint: "{{redis_endpoint}}"
+          Uri: "/0"
+          MaxIdleConn: 2
+          MaxOpenConn: 4
+          ConnMaxLifeTime: 3600
+          ConnMaxIdleTime: 3600
+    - Topic: "save_msg"
+      RedisPublisher:
+        MaxQueueLen: 100000
+        RedisSource:
+          Endpoint: "{{redis_endpoint}}"
+          Uri: "/0"
+          MaxIdleConn: 2
+          MaxOpenConn: 4
+          ConnMaxLifeTime: 3600
+          ConnMaxIdleTime: 3600
