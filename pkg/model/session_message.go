@@ -33,6 +33,7 @@ type (
 		FromUserId int64   `gorm:"from_user_id" json:"from_user_id"`
 		MsgType    int     `gorm:"msg_type" json:"msg_type"`
 		MsgContent string  `gorm:"msg_content" json:"msg_content"`
+		Status     int     `gorm:"status" json:"status"`
 		AtUsers    *string `gorm:"at_users" json:"at_users"`
 		ReplyMsgId *int64  `gorm:"reply_msg_id" json:"reply_msg_id"`
 		CreateTime int64   `gorm:"create_time" json:"create_time"`
@@ -41,6 +42,9 @@ type (
 	}
 
 	SessionMessageModel interface {
+		UpdateSessionMessageContent(sessionId, msgId, fUid int64, content string, status int) (int64, error)
+		UpdateSessionMessageStatus(sessionId, msgId, fUid int64, status int) (int64, error)
+		FindSessionMessage(sessionId, msgId, fUid int64) (*SessionMessage, error)
 		DelMessages(sessionId int64, messageIds []int64, from, to int64) error
 		InsertMessage(clientId int64, fromUserId int64, sessionId int64, msgId int64, msgContent string,
 			msgType int, atUserIds *string, replayMsgId *int64) (*SessionMessage, error)
@@ -55,6 +59,25 @@ type (
 		snowflakeNode *snowflake.Node
 	}
 )
+
+func (d defaultSessionMessageModel) UpdateSessionMessageContent(sessionId, msgId, fUid int64, content string, status int) (int64, error) {
+	sqlStr := fmt.Sprintf("update %s set msg_content = ?, status = ? where session_id = ? and msg_id = ? and fUid = ? ", d.genSessionMessageTableName(sessionId))
+	err := d.db.Exec(sqlStr, content, status, sessionId, msgId, fUid).Error
+	return d.db.RowsAffected, err
+}
+
+func (d defaultSessionMessageModel) UpdateSessionMessageStatus(sessionId, msgId int64, fUid int64, status int) (int64, error) {
+	sqlStr := fmt.Sprintf("update %s set status |= ? where session_id = ? and msg_id = ? and fUid = ? ", d.genSessionMessageTableName(sessionId))
+	err := d.db.Exec(sqlStr, status, sessionId, msgId, fUid).Error
+	return d.db.RowsAffected, err
+}
+
+func (d defaultSessionMessageModel) FindSessionMessage(sessionId, msgId, fUid int64) (*SessionMessage, error) {
+	result := &SessionMessage{}
+	strSql := "select * from " + d.genSessionMessageTableName(sessionId) + " where session_id = ? and msg_id = ? and from_user_id = ?"
+	err := d.db.Raw(strSql, sessionId, msgId, fUid).Scan(result).Error
+	return result, err
+}
 
 func (d defaultSessionMessageModel) DelMessages(sessionId int64, messageIds []int64, from, to int64) error {
 	if len(messageIds) > 0 {
@@ -101,11 +124,11 @@ func (d defaultSessionMessageModel) FindMessageByClientId(sessionId, clientId, f
 func (d defaultSessionMessageModel) GetSessionMessages(sid int64, ctime int, offset, count int, msgIds []int64) ([]*SessionMessage, error) {
 	result := make([]*SessionMessage, 0)
 	if len(msgIds) == 0 {
-		strSql := "select * from " + d.genSessionMessageTableName(sid) + " where session_id = ? and deleted = 0 and from_user_id != 0 and create_time < ? order by create_time desc limit ?,?"
-		err := d.db.Raw(strSql, sid, ctime, offset, count).Scan(&result).Error
+		strSql := "select * from " + d.genSessionMessageTableName(sid) + " where session_id = ? and deleted = 0 and status & ? = 0 and create_time <= ? order by create_time desc limit ?,?"
+		err := d.db.Raw(strSql, sid, MsgStatusRevoke, ctime, offset, count).Scan(&result).Error
 		return result, err
 	} else {
-		strSql := "select * from " + d.genSessionMessageTableName(sid) + " where session_id = ? and msg_id in ? and create_time < ? order by create_time desc limit ?,?"
+		strSql := "select * from " + d.genSessionMessageTableName(sid) + " where session_id = ? and msg_id in ? and create_time <= ? order by create_time desc limit ?,?"
 		err := d.db.Raw(strSql, sid, msgIds, ctime, offset, count).Scan(&result).Error
 		return result, err
 	}

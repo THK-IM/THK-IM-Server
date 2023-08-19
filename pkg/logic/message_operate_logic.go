@@ -2,6 +2,7 @@ package logic
 
 import (
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
+	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/THK-IM/THK-IM-Server/pkg/model"
 	"time"
 )
@@ -37,10 +38,14 @@ func (l *MessageLogic) ReadUserMessages(req dto.ReadUserMessageReq) error {
 }
 
 func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
-	// 发送撤回消息
-	if userMessage, err := l.appCtx.UserMessageModel().FindUserMessage(req.UId, req.SessionId, req.MessageId); err == nil {
-		if userMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不需要发送已读
-			return nil
+	if sessionMessage, err := l.appCtx.SessionMessageModel().FindSessionMessage(req.SessionId, req.MessageId, req.UId); err == nil {
+		if sessionMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不能发送撤回
+			return errorx.ErrMessageTypeNotSupportOperated
+		}
+		// 删除session的消息
+		_, err = l.appCtx.SessionMessageModel().UpdateSessionMessageStatus(sessionMessage.SessionId, sessionMessage.MsgId, sessionMessage.FromUserId, model.MsgStatusRevoke)
+		if err != nil {
+			return err
 		}
 		sendMessageReq := dto.SendMessageReq{
 			ClientId:  l.genClientId(),
@@ -48,7 +53,7 @@ func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
 			Type:      model.MsgTypeRevoke,
 			FUid:      req.UId,
 			CTime:     time.Now().UnixMilli(),
-			RMsgId:    &userMessage.MsgId,
+			RMsgId:    &req.MessageId,
 		} // 发送给session下的所有人
 		if _, err = l.SendMessage(sendMessageReq); err != nil {
 			l.appCtx.Logger().Errorf("RevokeUserMessage err:%d, %d, %d, %v", req.UId, req.SessionId, req.MessageId, err)
@@ -60,10 +65,14 @@ func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
 }
 
 func (l *MessageLogic) ReeditUserMessage(req dto.ReeditUserMessageReq) error {
-	// 发送撤回消息
-	if userMessage, err := l.appCtx.UserMessageModel().FindUserMessage(req.UId, req.SessionId, req.MessageId); err == nil {
-		if userMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不需要发送已读
-			return nil
+	if sessionMessage, err := l.appCtx.SessionMessageModel().FindSessionMessage(req.UId, req.SessionId, req.MessageId); err == nil {
+		if sessionMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不能发送撤回
+			return errorx.ErrMessageTypeNotSupportOperated
+		}
+		// 更新session的消息内容
+		_, err = l.appCtx.SessionMessageModel().UpdateSessionMessageContent(sessionMessage.SessionId, sessionMessage.MsgId, sessionMessage.FromUserId, req.Content, model.MsgStatusReedit)
+		if err != nil {
+			return err
 		}
 		sendMessageReq := dto.SendMessageReq{
 			ClientId:  l.genClientId(),
@@ -72,7 +81,7 @@ func (l *MessageLogic) ReeditUserMessage(req dto.ReeditUserMessageReq) error {
 			FUid:      req.UId,
 			CTime:     time.Now().UnixMilli(),
 			Body:      req.Content,
-			RMsgId:    &userMessage.MsgId,
+			RMsgId:    &req.MessageId,
 		} // 发送给session下的所有人
 		if _, err = l.SendMessage(sendMessageReq); err != nil {
 			l.appCtx.Logger().Errorf("ReeditUserMessage err:%d, %d, %d, %v", req.UId, req.SessionId, req.MessageId, err)

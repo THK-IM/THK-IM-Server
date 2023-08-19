@@ -36,6 +36,7 @@ func (l *MessageLogic) convSessionMessage2Message(sessionMsg *model.SessionMessa
 		CTime:     sessionMsg.CreateTime,
 		Body:      sessionMsg.MsgContent,
 		AtUsers:   sessionMsg.AtUsers,
+		Status:    &sessionMsg.Status,
 		Type:      sessionMsg.MsgType,
 		RMsgId:    sessionMsg.ReplyMsgId,
 	}

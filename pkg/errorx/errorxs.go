@@ -15,3 +15,4 @@ var ErrGroupAlreadyDeleted = NewErrorX(5002002, "group has been deleted")
 
 var ErrMessageFormat = NewErrorX(5004000, "Message format error")
 var ErrMessageDeliveryFailed = NewErrorX(5004002, "Message delivery failed")
+var ErrMessageTypeNotSupportOperated = NewErrorX(5004003, "Message type not support be operated")

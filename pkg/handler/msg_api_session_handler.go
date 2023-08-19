@@ -120,7 +120,7 @@ func getUserSession(appCtx *app.Context) gin.HandlerFunc {
 	}
 }
 
-func getSessionMessage(appCtx *app.Context) gin.HandlerFunc {
+func getSessionMessages(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var (
 			sessionId = ctx.Param("id")
