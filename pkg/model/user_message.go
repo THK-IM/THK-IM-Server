@@ -12,6 +12,7 @@ const (
 	MsgStatusAcked  = 1
 	MsgStatusRead   = 2
 	MsgStatusRevoke = 4
+	MsgStatusReedit = 8
 )
 
 type (
@@ -37,7 +38,7 @@ type (
 		AckUserMessages(userId int64, sessionId int64, messageIds []int64) error
 		GetUserMessages(userId int64, ctime int, offset, count int) ([]*UserMessage, error)
 		DeleteMessages(userId int64, sessionId int64, messageIds []int64, from, to int64) error
-		UpdateUserMessage(userId int64, sessionId int64, msgIds []int64, status int) error
+		UpdateUserMessage(userId int64, sessionId int64, msgIds []int64, status int, content *string) error
 	}
 
 	defaultUserMessageModel struct {
@@ -60,7 +61,8 @@ func (d defaultUserMessageModel) InsertUserMessage(m *UserMessage) error {
 }
 
 func (d defaultUserMessageModel) AckUserMessages(userId int64, sessionId int64, messageIds []int64) error {
-	sqlStr := fmt.Sprintf("update %s set status = (status | 1) where user_id = ?  and session_id = ? and msg_id in ? ", d.genUserMessageTableName(userId))
+	sqlStr := fmt.Sprintf("update %s set status = (status | 1) where user_id = ?  and session_id = ? and msg_id in ? ",
+		d.genUserMessageTableName(userId))
 	err := d.db.Exec(sqlStr, userId, sessionId, messageIds).Error
 	return err
 }
@@ -78,18 +80,27 @@ func (d defaultUserMessageModel) GetUserMessages(userId int64, ctime int, offset
 
 func (d defaultUserMessageModel) DeleteMessages(userId int64, sessionId int64, messageIds []int64, from, to int64) error {
 	if len(messageIds) > 0 {
-		sqlStr := fmt.Sprintf("update %s set deleted = 1 where user_id = ? and session_id = ? and msg_id in ? and create_time >= ? and create_time <= ? ", d.genUserMessageTableName(userId))
+		sqlStr := fmt.Sprintf("update %s set deleted = 1 where user_id = ? and session_id = ? and msg_id in ? and create_time >= ? and create_time <= ? ",
+			d.genUserMessageTableName(userId))
 		err := d.db.Exec(sqlStr, userId, sessionId, messageIds, from, to).Error
 		return err
 	} else {
-		sqlStr := fmt.Sprintf("update %s set deleted = 1 where user_id = ? and session_id = ? and create_time >= ? and create_time <= ?", d.genUserMessageTableName(userId))
+		sqlStr := fmt.Sprintf(
+			"update %s set deleted = 1 where user_id = ? and session_id = ? and create_time >= ? and create_time <= ?",
+			d.genUserMessageTableName(userId))
 		err := d.db.Exec(sqlStr, userId, sessionId, from, to).Error
 		return err
 	}
 }
 
-func (d defaultUserMessageModel) UpdateUserMessage(userId int64, sessionId int64, msgIds []int64, status int) error {
-	sqlStr := fmt.Sprintf("update %s set status = status | ? where user_id = ? and session_id = ? and msg_id in ? ", d.genUserMessageTableName(userId))
+func (d defaultUserMessageModel) UpdateUserMessage(userId int64, sessionId int64, msgIds []int64, status int, content *string) error {
+	updateContent := ""
+	if content != nil {
+		updateContent = fmt.Sprintf(", content = %s", *content)
+	}
+	sqlStr := fmt.Sprintf(
+		"update %s set status = status | ?  %s where user_id = ? and session_id = ? and msg_id in ? ",
+		d.genUserMessageTableName(userId), updateContent)
 	err := d.db.Exec(sqlStr, status, userId, sessionId, msgIds).Error
 	return err
 }

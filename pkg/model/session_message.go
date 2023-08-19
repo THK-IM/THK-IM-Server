@@ -21,8 +21,8 @@ const (
 	MsgTypeRead = -2
 	// MsgTypeRevoke 撤回消息
 	MsgTypeRevoke = -3
-	// MsgTypeUpdate 更新消息
-	MsgTypeUpdate = -4
+	// MsgTypeReedit 重编辑消息
+	MsgTypeReedit = -4
 )
 
 type (

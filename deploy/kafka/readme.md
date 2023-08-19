@@ -22,7 +22,7 @@ kafka-topics.sh --list --bootstrap-server kafka1:9092,kafka2:9092,kafka3:9092
 
 # 查看topic详情
 ```
-kafka-topics.sh --describe --bootstrap-server kafka11:9092,kafka22:9092,kafka33:9092 --topic test
+kafka-topics.sh --describe --bootstrap-server kafka1:9092,kafka2:9092,kafka3:9092 --topic test
 
 Topic: test TopicId: yiKjk9VTTZqVolLOEbZrbw PartitionCount: 3   ReplicationFactor: 1    Configs: min.insync.replicas=1,cleanup.policy=delete,retention.ms=86400000,retention.bytes=-1
     Topic: test Partition: 0    Leader: 3   Replicas: 3 Isr: 3

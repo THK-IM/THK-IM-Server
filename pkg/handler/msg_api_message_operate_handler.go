@@ -54,3 +54,19 @@ func revokeUserMessage(appCtx *app.Context) gin.HandlerFunc {
 		}
 	}
 }
+
+func reeditUserMessage(appCtx *app.Context) gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		var req dto.ReeditUserMessageReq
+		if err := ctx.BindJSON(&req); err != nil {
+			dto.ResponseBadRequest(ctx)
+			return
+		}
+		l := logic.NewMessageLogic(ctx, appCtx)
+		if err := l.ReeditUserMessage(req); err != nil {
+			dto.ResponseInternalServerError(ctx, err)
+		} else {
+			dto.ResponseSuccess(ctx, nil)
+		}
+	}
+}

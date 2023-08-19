@@ -17,3 +17,10 @@ type RevokeUserMessageReq struct {
 	SessionId int64 `json:"session_id" binding:"required"`
 	MessageId int64 `json:"msg_id" binding:"required"`
 }
+
+type ReeditUserMessageReq struct {
+	UId       int64  `json:"u_id"`
+	SessionId int64  `json:"session_id" binding:"required"`
+	MessageId int64  `json:"msg_id" binding:"required"`
+	Content   string `json:"content" binding:"required"`
+}

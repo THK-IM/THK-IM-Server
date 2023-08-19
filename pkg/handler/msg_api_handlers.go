@@ -19,9 +19,10 @@ func RegisterApiHandlers(ctx *app.Context) {
 	{
 		messageGroup.POST("", sendMessage(ctx))                 // 发送消息
 		messageGroup.DELETE("", deleteUserMessage(ctx))         // 删除消息
-		messageGroup.POST("/ack", ackUserMessages(ctx))         // 会话消息设置ack(已接受)
-		messageGroup.POST("/read", readUserMessage(ctx))        // 会话消息设置已读
-		messageGroup.POST("/revoke", revokeUserMessage(ctx))    // 会话消息撤回
+		messageGroup.POST("/ack", ackUserMessages(ctx))         // 用户消息设置ack(已接受)
+		messageGroup.POST("/read", readUserMessage(ctx))        // 用户消息设置已读
+		messageGroup.POST("/revoke", revokeUserMessage(ctx))    // 用户消息撤回
+		messageGroup.POST("/reedit", reeditUserMessage(ctx))    // 更新用户消息
 		messageGroup.POST("/push", pushMessage(ctx))            // 推送消息(用户消息/好友消息/群组消息/自定义消息)
 		messageGroup.GET("/latest", getUserLatestMessages(ctx)) // 获取最近消息
 	}

@@ -20,7 +20,7 @@ func createSession(appCtx *app.Context) gin.HandlerFunc {
 		if req.Type == model.SingleSessionType && (req.EntityId != nil || len(req.Members) != 2) {
 			dto.ResponseBadRequest(ctx)
 			return
-		} else if req.Type == model.GroupSessionType && req.EntityId == nil {
+		} else if (req.Type == model.GroupSessionType || req.Type == model.SuperGroupSessionType) && req.EntityId == nil {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
