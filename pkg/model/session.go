@@ -14,25 +14,19 @@ const (
 	SuperGroupSessionType = 3
 )
 
-const (
-	// MutedBitInSessionStatus 被禁言标志位
-	MutedBitInSessionStatus = 1
-)
-
 type (
 	Session struct {
 		Id         int64  `gorm:"id" gorm:"primaryKey" json:"id"`
 		Name       string `gorm:"name" json:"name"`
 		Remark     string `gorm:"remark" json:"remark"`
 		Type       int    `gorm:"type" json:"type"`
-		Status     int    `gorm:"status" json:"status"`
 		CreateTime int64  `gorm:"create_time" json:"create_time"`
 		UpdateTime int64  `gorm:"update_time" json:"update_time"`
 		Deleted    int8   `gorm:"deleted" json:"deleted"`
 	}
 
 	SessionModel interface {
-		UpdateSession(id int64, status *int, name, remark *string) error
+		UpdateSession(id int64, name, remark *string, tx *gorm.DB) error
 		FindSession(id int64, tx *gorm.DB) (*Session, error)
 		CreateEmptySession(sessionType int, tx *gorm.DB) (*Session, error)
 	}
@@ -45,14 +39,11 @@ type (
 	}
 )
 
-func (d defaultSessionModel) UpdateSession(id int64, status *int, name, remark *string) error {
-	if status == nil && name == nil && remark == nil {
+func (d defaultSessionModel) UpdateSession(id int64, name, remark *string, tx *gorm.DB) error {
+	if name == nil && remark == nil {
 		return nil
 	}
 	updateMap := make(map[string]interface{})
-	if status != nil {
-		updateMap["status"] = *status
-	}
 	if name != nil {
 		updateMap["name"] = *name
 	}
@@ -60,11 +51,15 @@ func (d defaultSessionModel) UpdateSession(id int64, status *int, name, remark *
 		updateMap["remark"] = *remark
 	}
 	updateMap["update_time"] = time.Now().UnixMilli()
-	return d.db.Table(d.genSessionTableName(id)).Where("id = ?", id).Updates(updateMap).Error
+	db := tx
+	if db == nil {
+		db = d.db
+	}
+	return db.Table(d.genSessionTableName(id)).Where("id = ?", id).Updates(updateMap).Error
 }
 
 func (d defaultSessionModel) FindSession(id int64, tx *gorm.DB) (*Session, error) {
-	sqlStr := "select * from " + d.genSessionTableName(id) + " where id = ?"
+	sqlStr := "select * from " + d.genSessionTableName(id) + " where id = ? and deleted = 0"
 	session := &Session{}
 	var err error
 	if tx != nil {

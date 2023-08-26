@@ -3,7 +3,6 @@ package handler
 import (
 	"github.com/THK-IM/THK-IM-Server/pkg/app"
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
-	"github.com/THK-IM/THK-IM-Server/pkg/event"
 	"github.com/THK-IM/THK-IM-Server/pkg/logic"
 	"github.com/gin-gonic/gin"
 )
@@ -13,6 +12,11 @@ func sendMessage(appCtx *app.Context) gin.HandlerFunc {
 		var req dto.SendMessageReq
 		if err := ctx.BindJSON(&req); err != nil {
 			dto.ResponseBadRequest(ctx)
+			return
+		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != req.FUid {
+			dto.ResponseForbidden(ctx)
 			return
 		}
 
@@ -25,34 +29,16 @@ func sendMessage(appCtx *app.Context) gin.HandlerFunc {
 	}
 }
 
-func pushMessage(appCtx *app.Context) gin.HandlerFunc {
-	return func(ctx *gin.Context) {
-		var req dto.PushMessageReq
-		if err := ctx.BindJSON(&req); err != nil {
-			dto.ResponseBadRequest(ctx)
-			return
-		}
-		if req.Type == event.PushCommonEventType || req.Type == event.PushUserEventType ||
-			req.Type == event.PushFriendEventType || req.Type == event.PushGroupEventType ||
-			req.Type == event.PushOtherEventType {
-			l := logic.NewMessageLogic(ctx, appCtx)
-			if rsp, err := l.PushMessage(req); err != nil {
-				dto.ResponseInternalServerError(ctx, err)
-			} else {
-				dto.ResponseSuccess(ctx, rsp)
-			}
-		} else {
-			dto.ResponseBadRequest(ctx)
-			return
-		}
-	}
-}
-
 func getUserLatestMessages(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req dto.GetMessageReq
 		if err := ctx.BindQuery(&req); err != nil {
 			dto.ResponseBadRequest(ctx)
+			return
+		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			dto.ResponseForbidden(ctx)
 			return
 		}
 		l := logic.NewMessageLogic(ctx, appCtx)
@@ -69,6 +55,11 @@ func deleteUserMessage(appCtx *app.Context) gin.HandlerFunc {
 		var req dto.DeleteMessageReq
 		if err := ctx.BindJSON(&req); err != nil {
 			dto.ResponseBadRequest(ctx)
+			return
+		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			dto.ResponseForbidden(ctx)
 			return
 		}
 		l := logic.NewMessageLogic(ctx, appCtx)

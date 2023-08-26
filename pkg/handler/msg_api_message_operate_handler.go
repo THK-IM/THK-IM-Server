@@ -14,6 +14,11 @@ func ackUserMessages(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			dto.ResponseForbidden(ctx)
+			return
+		}
 		l := logic.NewMessageLogic(ctx, appCtx)
 		if err := l.AckUserMessages(req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
@@ -28,6 +33,11 @@ func readUserMessage(appCtx *app.Context) gin.HandlerFunc {
 		var req dto.ReadUserMessageReq
 		if err := ctx.BindJSON(&req); err != nil {
 			dto.ResponseBadRequest(ctx)
+			return
+		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			dto.ResponseForbidden(ctx)
 			return
 		}
 		l := logic.NewMessageLogic(ctx, appCtx)
@@ -46,6 +56,11 @@ func revokeUserMessage(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			dto.ResponseForbidden(ctx)
+			return
+		}
 		l := logic.NewMessageLogic(ctx, appCtx)
 		if err := l.RevokeUserMessage(req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
@@ -60,6 +75,11 @@ func reeditUserMessage(appCtx *app.Context) gin.HandlerFunc {
 		var req dto.ReeditUserMessageReq
 		if err := ctx.BindJSON(&req); err != nil {
 			dto.ResponseBadRequest(ctx)
+			return
+		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			dto.ResponseForbidden(ctx)
 			return
 		}
 		l := logic.NewMessageLogic(ctx, appCtx)

@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	msgApiPostUserOnlineStatusUrl = "/user/online"
+	msgApiPostUserOnlineStatusUrl = "/system/user/online"
 )
 
 type (

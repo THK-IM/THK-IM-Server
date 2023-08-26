@@ -6,6 +6,11 @@ import (
 	"os"
 )
 
+const (
+	DeployBackend = "backend"
+	DeployExposed = "exposed"
+)
+
 type (
 	WebSocket struct {
 		Uri           string `yaml:"Uri"`
@@ -114,6 +119,8 @@ type (
 		Host        string       `yaml:"Host"`
 		Port        string       `yaml:"Port"`
 		Mode        string       `yaml:"Mode"`
+		DeployMode  string       `yaml:"DeployMode"`
+		IpWhiteList string       `yaml:"IpWhiteList"`
 		IM          *IM          `yaml:"IM"`
 		WebSocket   *WebSocket   `yaml:"WebSocket"`
 		Logg        *Logg        `yaml:"Logg"`

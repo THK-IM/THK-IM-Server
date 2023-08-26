@@ -1,5 +1,26 @@
 # THK-IM-Server
 
+## 启动服务   
+- api服务
+```
+go run main.go --config-file etc/msg_push_server.yaml
+
+```
+
+- 推送服务
+```
+go run main.go --config-file etc/msg_api_server.yaml
+
+```
+
+- 写消息db服务
+```
+go run main.go --config-file etc/msg_db_server.yaml
+
+```
+
+
+
 ## 构建镜像
 
 docker build -t thk-im-server/msg_api_server:v1  -f ./deploy/api_server.dockerfile .

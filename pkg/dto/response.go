@@ -11,6 +11,22 @@ type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
+func ResponseForbidden(ctx *gin.Context) {
+	rsp := &ErrorResponse{
+		Code:    http.StatusForbidden,
+		Message: "StatusForbidden",
+	}
+	ctx.JSON(http.StatusForbidden, rsp)
+}
+
+func ResponseUnauthorized(ctx *gin.Context) {
+	rsp := &ErrorResponse{
+		Code:    http.StatusUnauthorized,
+		Message: "StatusUnauthorized",
+	}
+	ctx.JSON(http.StatusUnauthorized, rsp)
+}
+
 func ResponseBadRequest(ctx *gin.Context) {
 	rsp := &ErrorResponse{
 		Code:    http.StatusBadRequest,

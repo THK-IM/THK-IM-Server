@@ -2,6 +2,7 @@ package logic
 
 import (
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
+	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/THK-IM/THK-IM-Server/pkg/model"
 )
 
@@ -15,8 +16,16 @@ func (l *SessionLogic) AddUser(sid int64, req dto.SessionAddUserReq) error {
 		maxCount = l.appCtx.Config().IM.MaxGroupMember
 	} else if session.Type == model.SuperGroupSessionType {
 		maxCount = l.appCtx.Config().IM.MaxSuperGroupMember
+	} else {
+		return errorx.ErrSessionType
 	}
-	return l.appCtx.SessionUserModel().AddUser(session, req.EntityId, req.UIds, maxCount)
+	roles := make([]int, 0)
+	entityIds := make([]int64, 0)
+	for range req.UIds {
+		roles = append(roles, req.Role)
+		entityIds = append(entityIds, req.EntityId)
+	}
+	return l.appCtx.SessionUserModel().AddUser(session, entityIds, req.UIds, roles, maxCount)
 }
 
 func (l *SessionLogic) DelUser(sid int64, req dto.SessionDelUserReq) error {
@@ -24,20 +33,26 @@ func (l *SessionLogic) DelUser(sid int64, req dto.SessionDelUserReq) error {
 	if err != nil {
 		return err
 	}
+
 	return l.appCtx.SessionUserModel().DelUser(session, req.UIds)
 }
 
-func (l *SessionLogic) UpdateSessionUser(req dto.SessionUserUpdateReq) error {
+func (l *SessionLogic) UpdateSessionUser(req dto.SessionUserUpdateReq) (err error) {
 	db := l.appCtx.Database()
-	var err error
 	tx := db.Begin()
-	if err = l.appCtx.SessionUserModel().UpdateUser(req.SId, req.UId, *req.Status, tx); err == nil {
-		err = l.appCtx.UserSessionModel().UpdateUserSession(req.UId, req.SId, nil, req.Status, tx)
-	}
 	if err != nil {
 		tx.Rollback()
 	} else {
 		tx.Commit()
 	}
+	var mute *string
+	if req.Mute == nil {
+		mute = nil
+	} else if *req.Mute == 0 {
+		*mute = "mute & 0"
+	} else if *req.Mute == 1 {
+		*mute = "mute | 2"
+	}
+	err = l.appCtx.SessionUserModel().UpdateUser(req.SId, req.UIds, req.Role, nil, mute, tx)
 	return err
 }

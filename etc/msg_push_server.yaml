@@ -1,7 +1,8 @@
 Name: msg_push_server
 Host: 0.0.0.0
-Port: 18002
+Port: 20000
 Mode: debug
+IpWhiteList: 192.168.1.1/32, 192.168.1.2/32
 IM:
   OnlineTimeout: 20
   MaxGroupMember: 500

@@ -250,6 +250,7 @@ func (server *WsServer) getToken(ctx *gin.Context) error {
 		}
 	}
 
+	// debug 模式下直接传uid, 线上环境需要传token
 	if server.mode == "debug" {
 		uid := ctx.Query(UidKey)
 		if strings.EqualFold(uid, "") {
@@ -265,25 +266,25 @@ func (server *WsServer) getToken(ctx *gin.Context) error {
 		} else {
 			return errors.New("token nil")
 		}
-	}
-
-	token := ctx.Query(TokenKey)
-	if strings.EqualFold(token, "") {
-		token = ctx.GetHeader(TokenKey)
-		if strings.EqualFold(token, "") {
-			token, _ = ctx.Cookie(TokenKey)
-		}
-	}
-
-	if strings.EqualFold("", token) {
-		return errors.New("token nil")
 	} else {
-		uid, err := server.GetUidByToken(token, pf)
-		if err == nil {
-			server.logger.Infof("GetUidByToken, token: %s, uid: %d", token, uid)
-			ctx.Request.Header.Set(PlatformKey, pf)
-			ctx.Request.Header.Set(UidKey, fmt.Sprintf("%d", uid))
+		token := ctx.Query(TokenKey)
+		if strings.EqualFold(token, "") {
+			token = ctx.GetHeader(TokenKey)
+			if strings.EqualFold(token, "") {
+				token, _ = ctx.Cookie(TokenKey)
+			}
 		}
-		return err
+		if strings.EqualFold("", token) {
+			return errors.New("token nil")
+		} else {
+			uid, err := server.GetUidByToken(token, pf)
+			if err == nil {
+				server.logger.Infof("GetUidByToken, token: %s, uid: %d", token, uid)
+				ctx.Request.Header.Set(PlatformKey, pf)
+				ctx.Request.Header.Set(UidKey, fmt.Sprintf("%d", uid))
+			}
+			return err
+		}
 	}
+
 }

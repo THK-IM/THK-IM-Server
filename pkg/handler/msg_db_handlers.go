@@ -33,9 +33,9 @@ func onMqSaveMsgEventReceived(m map[string]interface{}, appCtx *app.Context) err
 			}
 			userMessage := &model.UserMessage{
 				MsgId:      message.MsgId,
-				ClientId:   message.ClientId,
+				ClientId:   message.CId,
 				UserId:     r,
-				SessionId:  message.SessionId,
+				SessionId:  message.SId,
 				FromUserId: message.FUid,
 				AtUsers:    message.AtUsers,
 				MsgType:    message.Type,
@@ -51,19 +51,19 @@ func onMqSaveMsgEventReceived(m map[string]interface{}, appCtx *app.Context) err
 				return errorx.ErrMessageFormat
 			}
 			if message.Type == model.MsgTypeRead && message.RMsgId != nil && r == message.FUid { // 发送已读的人将自己的消息标记为已读
-				err = appCtx.UserMessageModel().UpdateUserMessage(r, message.SessionId, []int64{*message.RMsgId}, model.MsgStatusRead, nil)
+				err = appCtx.UserMessageModel().UpdateUserMessage(r, message.SId, []int64{*message.RMsgId}, model.MsgStatusRead, nil)
 				if err != nil {
 					return err
 				}
 			}
 			if message.Type == model.MsgTypeRevoke && message.RMsgId != nil {
-				err = appCtx.UserMessageModel().UpdateUserMessage(r, message.SessionId, []int64{*message.RMsgId}, model.MsgStatusRevoke, nil)
+				err = appCtx.UserMessageModel().UpdateUserMessage(r, message.SId, []int64{*message.RMsgId}, model.MsgStatusRevoke, nil)
 				if err != nil {
 					return err
 				}
 			}
 			if message.Type == model.MsgTypeReedit && message.RMsgId != nil {
-				err = appCtx.UserMessageModel().UpdateUserMessage(r, message.SessionId, []int64{*message.RMsgId}, model.MsgStatusReedit, &message.Body)
+				err = appCtx.UserMessageModel().UpdateUserMessage(r, message.SId, []int64{*message.RMsgId}, model.MsgStatusReedit, &message.Body)
 				if err != nil {
 					return err
 				}

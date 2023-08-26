@@ -8,19 +8,19 @@ import (
 )
 
 func (l *MessageLogic) AckUserMessages(req dto.AckUserMessagesReq) error {
-	return l.appCtx.UserMessageModel().AckUserMessages(req.UId, req.SessionId, req.MessageIds)
+	return l.appCtx.UserMessageModel().AckUserMessages(req.UId, req.SId, req.MsgIds)
 }
 
 func (l *MessageLogic) ReadUserMessages(req dto.ReadUserMessageReq) error {
 	// 对消息发件人发送已读消息
-	for _, msgId := range req.MessageIds {
-		if userMessage, err := l.appCtx.UserMessageModel().FindUserMessage(req.UId, req.SessionId, msgId); err == nil {
+	for _, msgId := range req.MsgIds {
+		if userMessage, err := l.appCtx.UserMessageModel().FindUserMessage(req.UId, req.SId, msgId); err == nil {
 			if userMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不需要发送已读
 				continue
 			}
 			sendMessageReq := dto.SendMessageReq{
-				ClientId:  l.genClientId(),
-				SessionId: req.SessionId,
+				CId:       l.genClientId(),
+				SId:       req.SId,
 				Type:      model.MsgTypeRead,
 				FUid:      req.UId,
 				CTime:     time.Now().UnixMilli(),
@@ -28,17 +28,17 @@ func (l *MessageLogic) ReadUserMessages(req dto.ReadUserMessageReq) error {
 				Receivers: []int64{userMessage.FromUserId, req.UId}, // 发送给对方和自己
 			}
 			if _, err = l.SendMessage(sendMessageReq); err != nil {
-				l.appCtx.Logger().Errorf("ReadUserMessages err:%d, %d, %d, %v", req.UId, req.SessionId, msgId, err)
+				l.appCtx.Logger().Errorf("ReadUserMessages err:%d, %d, %d, %v", req.UId, req.SId, msgId, err)
 			}
 		} else {
-			l.appCtx.Logger().Errorf("ReadUserMessages err:%d, %d, %d, %v", req.UId, req.SessionId, msgId, err)
+			l.appCtx.Logger().Errorf("ReadUserMessages err:%d, %d, %d, %v", req.UId, req.SId, msgId, err)
 		}
 	}
 	return nil
 }
 
 func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
-	if sessionMessage, err := l.appCtx.SessionMessageModel().FindSessionMessage(req.SessionId, req.MessageId, req.UId); err == nil {
+	if sessionMessage, err := l.appCtx.SessionMessageModel().FindSessionMessage(req.SId, req.MsgId, req.UId); err == nil {
 		if sessionMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不能发送撤回
 			return errorx.ErrMessageTypeNotSupportOperated
 		}
@@ -48,24 +48,24 @@ func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
 			return err
 		}
 		sendMessageReq := dto.SendMessageReq{
-			ClientId:  l.genClientId(),
-			SessionId: req.SessionId,
-			Type:      model.MsgTypeRevoke,
-			FUid:      req.UId,
-			CTime:     time.Now().UnixMilli(),
-			RMsgId:    &req.MessageId,
+			CId:    l.genClientId(),
+			SId:    req.SId,
+			Type:   model.MsgTypeRevoke,
+			FUid:   req.UId,
+			CTime:  time.Now().UnixMilli(),
+			RMsgId: &req.MsgId,
 		} // 发送给session下的所有人
 		if _, err = l.SendMessage(sendMessageReq); err != nil {
-			l.appCtx.Logger().Errorf("RevokeUserMessage err:%d, %d, %d, %v", req.UId, req.SessionId, req.MessageId, err)
+			l.appCtx.Logger().Errorf("RevokeUserMessage err:%d, %d, %d, %v", req.UId, req.SId, req.MsgId, err)
 		}
 	} else {
-		l.appCtx.Logger().Errorf("RevokeUserMessage err:%d, %d, %d, %v", req.UId, req.SessionId, req.MessageId, err)
+		l.appCtx.Logger().Errorf("RevokeUserMessage err:%d, %d, %d, %v", req.UId, req.SId, req.MsgId, err)
 	}
 	return nil
 }
 
 func (l *MessageLogic) ReeditUserMessage(req dto.ReeditUserMessageReq) error {
-	if sessionMessage, err := l.appCtx.SessionMessageModel().FindSessionMessage(req.UId, req.SessionId, req.MessageId); err == nil {
+	if sessionMessage, err := l.appCtx.SessionMessageModel().FindSessionMessage(req.UId, req.SId, req.MsgId); err == nil {
 		if sessionMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不能发送撤回
 			return errorx.ErrMessageTypeNotSupportOperated
 		}
@@ -75,19 +75,19 @@ func (l *MessageLogic) ReeditUserMessage(req dto.ReeditUserMessageReq) error {
 			return err
 		}
 		sendMessageReq := dto.SendMessageReq{
-			ClientId:  l.genClientId(),
-			SessionId: req.SessionId,
-			Type:      model.MsgTypeReedit,
-			FUid:      req.UId,
-			CTime:     time.Now().UnixMilli(),
-			Body:      req.Content,
-			RMsgId:    &req.MessageId,
+			CId:    l.genClientId(),
+			SId:    req.SId,
+			Type:   model.MsgTypeReedit,
+			FUid:   req.UId,
+			CTime:  time.Now().UnixMilli(),
+			Body:   req.Content,
+			RMsgId: &req.MsgId,
 		} // 发送给session下的所有人
 		if _, err = l.SendMessage(sendMessageReq); err != nil {
-			l.appCtx.Logger().Errorf("ReeditUserMessage err:%d, %d, %d, %v", req.UId, req.SessionId, req.MessageId, err)
+			l.appCtx.Logger().Errorf("ReeditUserMessage err:%d, %d, %d, %v", req.UId, req.SId, req.MsgId, err)
 		}
 	} else {
-		l.appCtx.Logger().Errorf("ReeditUserMessage err:%d, %d, %d, %v", req.UId, req.SessionId, req.MessageId, err)
+		l.appCtx.Logger().Errorf("ReeditUserMessage err:%d, %d, %d, %v", req.UId, req.SId, req.MsgId, err)
 	}
 	return nil
 }

@@ -3,7 +3,7 @@ package dto
 type PostUserOnlineReq struct {
 	NodeId int64 `json:"node_id" binding:"required"`
 	ConnId int64 `json:"conn_id" binding:"required"`
-	Online bool  `json:"online" `
+	Online bool  `json:"online"  binding:"required"`
 	UId    int64 `json:"u_id" binding:"required"`
 }
 

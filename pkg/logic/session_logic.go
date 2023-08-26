@@ -31,6 +31,7 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return nil, err
 		}
+		// 如果session已经存在
 		if userSession.UserId > 0 {
 			if userSession.Deleted == 1 {
 				now := time.Now().UnixMilli()
@@ -44,13 +45,13 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 				}
 			}
 			return &dto.CreateSessionRes{
-				SessionId: userSession.SessionId,
-				Type:      userSession.Type,
-				EntityId:  userSession.EntityId,
-				CTime:     userSession.CreateTime,
-				MTime:     userSession.UpdateTime,
-				Status:    userSession.Status,
-				Top:       userSession.Top,
+				SId:      userSession.SessionId,
+				Type:     userSession.Type,
+				EntityId: userSession.EntityId,
+				CTime:    userSession.CreateTime,
+				MTime:    userSession.UpdateTime,
+				Status:   userSession.Status,
+				Top:      userSession.Top,
 			}, nil
 		}
 	} else if req.Type == model.GroupSessionType || req.Type == model.SuperGroupSessionType {
@@ -61,6 +62,7 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 		if err != nil && err != gorm.ErrRecordNotFound {
 			return nil, err
 		}
+		// 如果session已经存在
 		if userSession.UserId > 0 {
 			if userSession.Deleted == 1 {
 				return nil, errorx.ErrGroupAlreadyDeleted
@@ -71,24 +73,28 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 					Type: userSession.Type,
 				}
 				members := req.Members[1:]
-				maxCount := 0
+				maxCount := l.appCtx.Config().IM.MaxSuperGroupMember
 				if userSession.Type == model.GroupSessionType {
 					maxCount = l.appCtx.Config().IM.MaxGroupMember
-				} else if userSession.Type == model.SuperGroupSessionType {
-					maxCount = l.appCtx.Config().IM.MaxSuperGroupMember
 				}
-				if err = l.appCtx.SessionUserModel().AddUser(session, *req.EntityId, members, maxCount); err != nil {
+				entityIds := make([]int64, 0)
+				role := make([]int, 0)
+				for range members {
+					entityIds = append(entityIds, *req.EntityId)
+					role = append(role, model.SessionMember)
+				}
+				if err = l.appCtx.SessionUserModel().AddUser(session, entityIds, members, role, maxCount); err != nil {
 					return nil, err
 				}
 			}
 			return &dto.CreateSessionRes{
-				SessionId: userSession.SessionId,
-				Type:      userSession.Type,
-				EntityId:  userSession.EntityId,
-				CTime:     userSession.CreateTime,
-				MTime:     userSession.UpdateTime,
-				Status:    userSession.Status,
-				Top:       userSession.Top,
+				SId:      userSession.SessionId,
+				Type:     userSession.Type,
+				EntityId: userSession.EntityId,
+				CTime:    userSession.CreateTime,
+				MTime:    userSession.UpdateTime,
+				Status:   userSession.Status,
+				Top:      userSession.Top,
 			}, nil
 		}
 	} else {
@@ -106,25 +112,27 @@ func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (*dto.CreateSe
 	if req.Type == model.SingleSessionType {
 		entityId = req.Members[1]
 		entityIds := []int64{req.Members[1], req.Members[0]}
-		for i, member := range req.Members {
-			if err = l.appCtx.SessionUserModel().AddUser(session, entityIds[i], []int64{member}, 2); err != nil {
-				return nil, err
-			}
-		}
-	} else if req.Type == model.GroupSessionType {
-		if req.EntityId == nil {
-			return nil, errorx.ErrParamsError
-		}
-		entityId = *req.EntityId
-		if err = l.appCtx.SessionUserModel().AddUser(session, entityId, req.Members, l.appCtx.Config().IM.MaxGroupMember); err != nil {
+		uIds := []int64{req.Members[0], req.Members[1]}
+		roles := []int{model.SessionOwner, model.SessionOwner}
+		if err = l.appCtx.SessionUserModel().AddUser(session, entityIds, uIds, roles, 2); err != nil {
 			return nil, err
 		}
-	} else if req.Type == model.SuperGroupSessionType {
+	} else if req.Type == model.GroupSessionType || req.Type == model.SuperGroupSessionType {
 		if req.EntityId == nil {
 			return nil, errorx.ErrParamsError
 		}
-		entityId = *req.EntityId
-		if err = l.appCtx.SessionUserModel().AddUser(session, entityId, req.Members, l.appCtx.Config().IM.MaxSuperGroupMember); err != nil {
+		entityIds := make([]int64, 0)
+		roles := make([]int, 0)
+		for range req.Members {
+			entityIds = append(entityIds, *req.EntityId)
+			roles = append(roles, model.SessionMember)
+		}
+		roles[0] = model.SessionOwner
+		maxMember := l.appCtx.Config().IM.MaxSuperGroupMember
+		if req.Type == model.GroupSessionType {
+			maxMember = l.appCtx.Config().IM.MaxGroupMember
+		}
+		if err = l.appCtx.SessionUserModel().AddUser(session, entityIds, req.Members, roles, maxMember); err != nil {
 			return nil, err
 		}
 	} else {
@@ -132,31 +140,62 @@ func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (*dto.CreateSe
 	}
 
 	return &dto.CreateSessionRes{
-		SessionId: session.Id,
-		Type:      req.Type,
-		EntityId:  entityId,
-		CTime:     session.CreateTime,
-		MTime:     session.UpdateTime,
+		SId:      session.Id,
+		Type:     req.Type,
+		EntityId: entityId,
+		CTime:    session.CreateTime,
+		MTime:    session.UpdateTime,
 	}, nil
 }
 
-func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) error {
-	return l.appCtx.SessionModel().UpdateSession(req.Id, req.Status, req.Name, req.Remark)
+func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) (err error) {
+	tx := l.appCtx.Database().Begin()
+	defer func() {
+		if err != nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
+		}
+	}()
+	err = l.appCtx.SessionModel().UpdateSession(req.Id, req.Name, req.Remark, tx)
+	if err != nil {
+		return
+	}
+	sessionUsers, errSessionUsers := l.appCtx.SessionUserModel().FindAllSessionUsers(req.Id)
+	if errSessionUsers != nil {
+		err = errSessionUsers
+		return
+	}
+	uIds := make([]int64, 0)
+	for _, su := range sessionUsers {
+		uIds = append(uIds, su.UserId)
+	}
+	var mute *string
+	if req.Mute == nil {
+		mute = nil
+	} else if *req.Mute == 0 {
+		*mute = "mute & 0"
+	} else if *req.Mute == 1 {
+		*mute = "mute | 1"
+	}
+	err = l.appCtx.UserSessionModel().UpdateUserSession(uIds, req.Id, req.Name, req.Remark, mute, nil, nil, nil, tx)
+	return
 }
 
-func (l *SessionLogic) UpdateUserSession(req dto.UpdateUserSessionReq) error {
-	db := l.appCtx.Database()
-	var err error
-	tx := db.Begin()
-	if err = l.appCtx.UserSessionModel().UpdateUserSession(req.UId, req.SId, req.Top, req.Status, tx); err == nil {
-		err = l.appCtx.SessionUserModel().UpdateUser(req.SId, req.UId, *req.Status, tx)
+func (l *SessionLogic) UpdateUserSession(req dto.UpdateUserSessionReq) (err error) {
+	tx := l.appCtx.Database().Begin()
+	defer func() {
+		if err != nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
+		}
+	}()
+	err = l.appCtx.UserSessionModel().UpdateUserSession([]int64{req.UId}, req.SId, nil, nil, nil, req.Top, req.Status, nil, tx)
+	if err == nil {
+		err = l.appCtx.SessionUserModel().UpdateUser(req.SId, []int64{req.UId}, nil, req.Status, nil, tx)
 	}
-	if err != nil {
-		tx.Rollback()
-	} else {
-		tx.Commit()
-	}
-	return err
+	return
 }
 
 func (l *SessionLogic) GetUserSessions(req dto.GetUserSessionsReq) (*dto.GetUserSessionsRes, error) {
@@ -183,12 +222,12 @@ func (l *SessionLogic) GetUserSession(uid, sid int64) (*dto.UserSession, error) 
 
 func (l *SessionLogic) convUserSession(userSession *model.UserSession) *dto.UserSession {
 	return &dto.UserSession{
-		SessionId: userSession.SessionId,
-		Type:      userSession.Type,
-		Top:       userSession.Top,
-		Status:    userSession.Status,
-		EntityId:  userSession.EntityId,
-		CTime:     userSession.CreateTime,
-		MTime:     userSession.UpdateTime,
+		SId:      userSession.SessionId,
+		Type:     userSession.Type,
+		Top:      userSession.Top,
+		Status:   userSession.Status,
+		EntityId: userSession.EntityId,
+		CTime:    userSession.CreateTime,
+		MTime:    userSession.UpdateTime,
 	}
 }

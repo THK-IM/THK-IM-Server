@@ -13,7 +13,7 @@ type GetMessageRes struct {
 
 type DeleteMessageReq struct {
 	UId        int64   `json:"u_id"`
-	SessionId  int64   `json:"session_id"`
+	SId        int64   `json:"s_id"`
 	MessageIds []int64 `json:"msg_ids"`
 	TimeFrom   int64   `json:"time_from"`
 	TimeTo     int64   `json:"time_to"`
@@ -33,21 +33,21 @@ type PushMessageRes struct {
 }
 
 type Message struct {
-	ClientId  int64   `json:"client_id"`
-	SessionId int64   `json:"session_id"`
-	MsgId     int64   `json:"msg_id"`
-	Type      int     `json:"type"`
-	FUid      int64   `json:"f_u_id"`
-	CTime     int64   `json:"c_time"`
-	Body      string  `json:"body"`
-	RMsgId    *int64  `json:"r_msg_id,omitempty"`
-	Status    *int    `json:"status,omitempty"`
-	AtUsers   *string `json:"at_users,omitempty"`
+	CId     int64   `json:"c_id"` // 消息客户端id
+	SId     int64   `json:"s_id"`
+	MsgId   int64   `json:"msg_id"` // 消息服务端id
+	Type    int     `json:"type"`
+	FUid    int64   `json:"f_u_id"`
+	CTime   int64   `json:"c_time"`
+	Body    string  `json:"body"`
+	RMsgId  *int64  `json:"r_msg_id,omitempty"`
+	Status  *int    `json:"status,omitempty"`
+	AtUsers *string `json:"at_users,omitempty"`
 }
 
 type SendMessageReq struct {
-	ClientId  int64   `json:"client_id" binding:"required"`
-	SessionId int64   `json:"session_id" binding:"required"`
+	CId       int64   `json:"c_id" binding:"required"`
+	SId       int64   `json:"s_id" binding:"required"`
 	Type      int     `json:"type" binding:"required"`
 	FUid      int64   `json:"f_u_id"`
 	CTime     int64   `json:"c_time" binding:"required"`

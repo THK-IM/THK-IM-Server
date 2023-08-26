@@ -32,6 +32,14 @@ func createSession(appCtx *app.Context) gin.HandlerFunc {
 			}
 		}
 
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 {
+			if requestUid != req.Members[0] {
+				dto.ResponseBadRequest(ctx)
+				return
+			}
+		}
+
 		l := logic.NewSessionLogic(ctx, appCtx)
 		if resp, err := l.CreateSession(req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
@@ -54,6 +62,18 @@ func updateSession(appCtx *app.Context) gin.HandlerFunc {
 		} else {
 			req.Id = int64(id)
 		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 {
+			if sessionUser, err := appCtx.SessionUserModel().FindSessionUser(req.Id, requestUid); err != nil {
+				dto.ResponseForbidden(ctx)
+				return
+			} else {
+				if sessionUser.Role == model.SessionMember {
+					dto.ResponseForbidden(ctx)
+					return
+				}
+			}
+		}
 		l := logic.NewSessionLogic(ctx, appCtx)
 		if err := l.UpdateSession(req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
@@ -68,6 +88,11 @@ func updateUserSession(appCtx *app.Context) gin.HandlerFunc {
 		var req dto.UpdateUserSessionReq
 		if err := ctx.ShouldBindJSON(&req); err != nil {
 			dto.ResponseBadRequest(ctx)
+			return
+		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			dto.ResponseForbidden(ctx)
 			return
 		}
 
@@ -87,7 +112,11 @@ func getUserSessions(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
-
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != req.UId {
+			dto.ResponseForbidden(ctx)
+			return
+		}
 		l := logic.NewSessionLogic(ctx, appCtx)
 		if resp, err := l.GetUserSessions(req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
@@ -110,6 +139,11 @@ func getUserSession(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != iUid {
+			dto.ResponseForbidden(ctx)
+			return
+		}
 
 		l := logic.NewSessionLogic(ctx, appCtx)
 		if res, err := l.GetUserSession(iUid, iSid); err != nil {
@@ -130,12 +164,19 @@ func getSessionMessages(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 {
+			if _, err := appCtx.SessionUserModel().FindSessionUser(iSessionId, requestUid); err != nil {
+				dto.ResponseForbidden(ctx)
+				return
+			}
+		}
 		var req dto.GetSessionMessageReq
 		if err := ctx.BindQuery(&req); err != nil {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
-		req.SessionId = iSessionId
+		req.SId = iSessionId
 		l := logic.NewMessageLogic(ctx, appCtx)
 		if res, err := l.GetSessionMessages(req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
@@ -150,8 +191,8 @@ func deleteSessionMessage(appCtx *app.Context) gin.HandlerFunc {
 		var (
 			sessionId = ctx.Param("id")
 		)
-		iSessionId, e1 := strconv.ParseInt(sessionId, 10, 64)
-		if e1 != nil {
+		iSessionId, errSessionId := strconv.ParseInt(sessionId, 10, 64)
+		if errSessionId != nil {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
@@ -160,7 +201,19 @@ func deleteSessionMessage(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
-		req.SessionId = iSessionId
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 {
+			if sessionUser, err := appCtx.SessionUserModel().FindSessionUser(iSessionId, requestUid); err != nil {
+				dto.ResponseForbidden(ctx)
+				return
+			} else {
+				if sessionUser.Role != model.SessionOwner {
+					dto.ResponseForbidden(ctx)
+					return
+				}
+			}
+		}
+		req.SId = iSessionId
 		l := logic.NewMessageLogic(ctx, appCtx)
 		if err := l.DelSessionMessage(&req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
