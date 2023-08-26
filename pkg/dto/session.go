@@ -53,13 +53,17 @@ type DelSessionMessageReq struct {
 }
 
 type UserSession struct {
-	SId      int64 `json:"s_id"`
-	Type     int   `json:"type"`
-	Status   int   `json:"status"`
-	Top      int64 `json:"top"`
-	EntityId int64 `json:"entity_id"`
-	CTime    int64 `json:"c_time"`
-	MTime    int64 `json:"m_time"`
+	SId      int64  `json:"s_id"`
+	Name     string `json:"name"`
+	Remark   string `json:"remark"`
+	Type     int    `json:"type"`
+	Status   int    `json:"status"`
+	Role     int    `json:"role"`
+	Mute     int    `json:"mute"`
+	Top      int64  `json:"top"`
+	EntityId int64  `json:"entity_id"`
+	CTime    int64  `json:"c_time"`
+	MTime    int64  `json:"m_time"`
 }
 
 type GetUserSessionsRes struct {

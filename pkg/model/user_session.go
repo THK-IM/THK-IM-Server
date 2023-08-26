@@ -28,6 +28,7 @@ type (
 		Name       string `gorm:"name" json:"name"`
 		Remark     string `gorm:"remark" json:"remark"`
 		Top        int64  `gorm:"top" json:"top"`
+		Role       int    `gorm:"role" json:"role"`
 		Mute       int    `gorm:"mute" json:"mute"`
 		Status     int    `gorm:"status" json:"status"`
 		CreateTime int64  `gorm:"create_time" json:"create_time"`

@@ -224,6 +224,10 @@ func (l *SessionLogic) convUserSession(userSession *model.UserSession) *dto.User
 	return &dto.UserSession{
 		SId:      userSession.SessionId,
 		Type:     userSession.Type,
+		Name:     userSession.Name,
+		Remark:   userSession.Remark,
+		Role:     userSession.Role,
+		Mute:     userSession.Mute,
 		Top:      userSession.Top,
 		Status:   userSession.Status,
 		EntityId: userSession.EntityId,

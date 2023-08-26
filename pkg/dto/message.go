@@ -40,8 +40,8 @@ type Message struct {
 	FUid    int64   `json:"f_u_id"`
 	CTime   int64   `json:"c_time"`
 	Body    string  `json:"body"`
-	RMsgId  *int64  `json:"r_msg_id,omitempty"`
 	Status  *int    `json:"status,omitempty"`
+	RMsgId  *int64  `json:"r_msg_id,omitempty"`
 	AtUsers *string `json:"at_users,omitempty"`
 }
 

@@ -33,7 +33,6 @@ type (
 		FromUserId int64   `gorm:"from_user_id" json:"from_user_id"`
 		MsgType    int     `gorm:"msg_type" json:"msg_type"`
 		MsgContent string  `gorm:"msg_content" json:"msg_content"`
-		Status     int     `gorm:"status" json:"status"`
 		AtUsers    *string `gorm:"at_users" json:"at_users"`
 		ReplyMsgId *int64  `gorm:"reply_msg_id" json:"reply_msg_id"`
 		CreateTime int64   `gorm:"create_time" json:"create_time"`
