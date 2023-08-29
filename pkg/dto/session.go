@@ -12,8 +12,9 @@ type CreateSessionRes struct {
 	Type     int   `json:"type"`
 	CTime    int64 `json:"c_time"`
 	MTime    int64 `json:"m_time"`
-	Top      int64 `json:"top,omitempty"`
-	Status   int   `json:"status,omitempty"`
+	Top      int64 `json:"top"`
+	Status   int   `json:"status"`
+	Success  bool  `json:"success"` // 如果之前已经创建，false
 }
 
 type UpdateSessionReq struct {

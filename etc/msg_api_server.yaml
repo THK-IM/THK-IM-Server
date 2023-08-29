@@ -4,12 +4,12 @@ Port: 10000
 Mode: debug
 # exposed外网暴露模式，校验用户token
 # backend后端模式，校验ip
-DeployMode: "exposed"
-IpWhiteList: 192.168.1.1/32, 192.168.1.2/32
+DeployMode: "backend"
+IpWhiteList: 192.168.31.1/24, 192.168.1.1/24
 IM:
   OnlineTimeout: 20
-  MaxGroupMember: 500
-  MaxSuperGroupMember: 100000
+  MaxGroupMember: 100
+  MaxSuperGroupMember: 200
 WebSocket:
   Uri: "/ws"
   MaxClient: 50000

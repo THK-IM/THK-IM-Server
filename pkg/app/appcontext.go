@@ -151,7 +151,7 @@ func NewAppContext(config *conf.Config, httpEngine *gin.Engine) *Context {
 		snowflakeNode: snowflakeNode,
 	}
 	if config.DataSource != nil {
-		ctx.database = loader.LoadDataBase(config.DataSource)
+		ctx.database = loader.LoadDataBase(logger, config.DataSource)
 		if config.Models != nil {
 			ctx.modelMap = loader.LoadModels(config.Models, ctx.database, logger, snowflakeNode)
 		}

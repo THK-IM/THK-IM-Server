@@ -144,7 +144,7 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, uI
 	}()
 	count := 0
 	tableName := d.genSessionUserTableName(session.Id)
-	sqlStr := fmt.Sprintf("select count(0) from %s where session_id = ? and user_in not in ? and deleted = 0", tableName)
+	sqlStr := fmt.Sprintf("select count(0) from %s where session_id = ? and user_id not in ? and deleted = 0", tableName)
 	if err = tx.Raw(sqlStr, session.Id, uIds).Scan(&count).Error; err != nil {
 		return err
 	}
@@ -158,14 +158,21 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, uI
 		" (session_id, user_id, role, type, create_time, update_time) values (?, ?, ?, ?, ?, ?) " +
 		"on duplicate key update role = ?, deleted = ?, update_time = ? "
 
+	userMute := 0
+	if session.Mute == 1 {
+		userMute = 1
+	}
 	for index, id := range uIds {
 		if err = tx.Exec(sql1, session.Id, id, role[index], session.Type, t, t, role[index], 0, t).Error; err != nil {
 			return err
 		}
+
 		sql2 := "insert into " + d.genUserSessionTableName(id) +
-			" (session_id, user_id, role, type, entity_id, create_time, update_time) values (?, ?, ?, ?, ?, ?, ?) " +
-			"on duplicate key update top = ?, role = ?, deleted = ?, update_time = ? "
-		if err = tx.Exec(sql2, session.Id, id, role[index], session.Type, entityIds[index], t, t, 0, role[index], 0, t).Error; err != nil {
+			" (session_id, user_id, type, entity_id, role, name, remark, mute, create_time, update_time) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
+			"on duplicate key update top = ?, role = ?, name = ?, remark = ?, mute = ?, deleted = ?, update_time = ? "
+
+		if err = tx.Exec(sql2, session.Id, id, session.Type, entityIds[index], role[index], session.Name, session.Remark, userMute, t, t,
+			0, role[index], session.Name, session.Remark, userMute, 0, t).Error; err != nil {
 			return err
 		}
 	}

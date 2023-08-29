@@ -13,12 +13,14 @@ func addSessionUser(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req dto.SessionAddUserReq
 		if err := ctx.ShouldBindJSON(&req); err != nil {
+			appCtx.Logger().Error(err)
 			dto.ResponseBadRequest(ctx)
 			return
 		}
 
-		sessionId, errSessionId := strconv.ParseInt(ctx.Param("id"), 64, 10)
+		sessionId, errSessionId := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		if errSessionId != nil {
+			appCtx.Logger().Error(errSessionId)
 			dto.ResponseBadRequest(ctx)
 			return
 		}
@@ -48,7 +50,7 @@ func deleteSessionUser(appCtx *app.Context) gin.HandlerFunc {
 			return
 		}
 
-		sessionId, errSessionId := strconv.ParseInt(ctx.Param("id"), 64, 10)
+		sessionId, errSessionId := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		if errSessionId != nil {
 			dto.ResponseBadRequest(ctx)
 			return
@@ -79,7 +81,7 @@ func updateSessionUser(appCtx *app.Context) gin.HandlerFunc {
 			return
 		}
 
-		sessionId, errSessionId := strconv.ParseInt(ctx.Param("id"), 64, 10)
+		sessionId, errSessionId := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		if errSessionId != nil {
 			dto.ResponseBadRequest(ctx)
 			return

@@ -40,7 +40,7 @@ func (l *MessageLogic) ReadUserMessages(req dto.ReadUserMessageReq) error {
 func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
 	if sessionMessage, err := l.appCtx.SessionMessageModel().FindSessionMessage(req.SId, req.MsgId, req.UId); err == nil {
 		if sessionMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不能发送撤回
-			return errorx.ErrMessageTypeNotSupportOperated
+			return errorx.ErrMessageTypeNotSupport
 		}
 		// 删除session的消息
 		_, err = l.appCtx.SessionMessageModel().UpdateSessionMessageStatus(sessionMessage.SessionId, sessionMessage.MsgId, sessionMessage.FromUserId, model.MsgStatusRevoke)
@@ -67,7 +67,7 @@ func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
 func (l *MessageLogic) ReeditUserMessage(req dto.ReeditUserMessageReq) error {
 	if sessionMessage, err := l.appCtx.SessionMessageModel().FindSessionMessage(req.UId, req.SId, req.MsgId); err == nil {
 		if sessionMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不能发送撤回
-			return errorx.ErrMessageTypeNotSupportOperated
+			return errorx.ErrMessageTypeNotSupport
 		}
 		// 更新session的消息内容
 		_, err = l.appCtx.SessionMessageModel().UpdateSessionMessageContent(sessionMessage.SessionId, sessionMessage.MsgId, sessionMessage.FromUserId, req.Content, model.MsgStatusReedit)

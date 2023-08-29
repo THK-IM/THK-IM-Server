@@ -52,6 +52,7 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 				MTime:    userSession.UpdateTime,
 				Status:   userSession.Status,
 				Top:      userSession.Top,
+				Success:  false,
 			}, nil
 		}
 	} else if req.Type == model.GroupSessionType || req.Type == model.SuperGroupSessionType {
@@ -95,6 +96,7 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 				MTime:    userSession.UpdateTime,
 				Status:   userSession.Status,
 				Top:      userSession.Top,
+				Success:  false,
 			}, nil
 		}
 	} else {
@@ -145,6 +147,7 @@ func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (*dto.CreateSe
 		EntityId: entityId,
 		CTime:    session.CreateTime,
 		MTime:    session.UpdateTime,
+		Success:  true,
 	}, nil
 }
 
@@ -157,7 +160,7 @@ func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) (err error) {
 			tx.Rollback()
 		}
 	}()
-	err = l.appCtx.SessionModel().UpdateSession(req.Id, req.Name, req.Remark, tx)
+	err = l.appCtx.SessionModel().UpdateSession(req.Id, req.Name, req.Remark, req.Mute, tx)
 	if err != nil {
 		return
 	}

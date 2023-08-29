@@ -76,6 +76,7 @@ func (d defaultUserSessionModel) FindUserSessionByEntityId(uId, entityId int64, 
 }
 
 func (d defaultUserSessionModel) UpdateUserSession(uIds []int64, sId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int, tx *gorm.DB) error {
+	// 分表uid数组
 	sharedUIds := make(map[int64][]int64, 0)
 	for _, uId := range uIds {
 		share := uId % d.shards

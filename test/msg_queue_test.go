@@ -155,7 +155,7 @@ func groupSubscribe(t *testing.T, msgCount, publisherCount, consumerCount int, c
 		case msg, isOpen := <-msgChannel:
 			if !isOpen {
 				t.Error(errors.New("channel closed"))
-				t.Failed()
+				t.Fail()
 			}
 			messages = append(messages, msg)
 			count := len(messages)

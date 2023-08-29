@@ -2,7 +2,10 @@ Name: msg_push_server
 Host: 0.0.0.0
 Port: 20000
 Mode: debug
-IpWhiteList: 192.168.1.1/32, 192.168.1.2/32
+# exposed外网暴露模式，校验用户token
+# backend后端模式，校验ip
+DeployMode: "backend"
+IpWhiteList: 192.168.31.1/24, 192.168.1.1/24
 IM:
   OnlineTimeout: 20
   MaxGroupMember: 500

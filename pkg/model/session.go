@@ -16,17 +16,18 @@ const (
 
 type (
 	Session struct {
-		Id         int64  `gorm:"id" gorm:"primaryKey" json:"id"`
+		Id         int64  `gorm:"id" json:"id"`
 		Name       string `gorm:"name" json:"name"`
 		Remark     string `gorm:"remark" json:"remark"`
 		Type       int    `gorm:"type" json:"type"`
+		Mute       int8   `gorm:"mute" json:"mute"`
 		CreateTime int64  `gorm:"create_time" json:"create_time"`
 		UpdateTime int64  `gorm:"update_time" json:"update_time"`
 		Deleted    int8   `gorm:"deleted" json:"deleted"`
 	}
 
 	SessionModel interface {
-		UpdateSession(id int64, name, remark *string, tx *gorm.DB) error
+		UpdateSession(id int64, name, remark *string, mute *int, tx *gorm.DB) error
 		FindSession(id int64, tx *gorm.DB) (*Session, error)
 		CreateEmptySession(sessionType int, tx *gorm.DB) (*Session, error)
 	}
@@ -39,8 +40,8 @@ type (
 	}
 )
 
-func (d defaultSessionModel) UpdateSession(id int64, name, remark *string, tx *gorm.DB) error {
-	if name == nil && remark == nil {
+func (d defaultSessionModel) UpdateSession(id int64, name, remark *string, mute *int, tx *gorm.DB) error {
+	if name == nil && remark == nil && mute == nil {
 		return nil
 	}
 	updateMap := make(map[string]interface{})
@@ -49,6 +50,9 @@ func (d defaultSessionModel) UpdateSession(id int64, name, remark *string, tx *g
 	}
 	if remark != nil {
 		updateMap["remark"] = *remark
+	}
+	if mute != nil {
+		updateMap["mute"] = *mute
 	}
 	updateMap["update_time"] = time.Now().UnixMilli()
 	db := tx
