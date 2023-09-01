@@ -12,11 +12,11 @@ type GetMessageRes struct {
 }
 
 type DeleteMessageReq struct {
-	UId        int64   `json:"u_id"`
-	SId        int64   `json:"s_id"`
+	UId        int64   `json:"u_id" binding:"required"`
+	SId        int64   `json:"s_id" binding:"required"`
 	MessageIds []int64 `json:"msg_ids"`
-	TimeFrom   int64   `json:"time_from"`
-	TimeTo     int64   `json:"time_to"`
+	TimeFrom   *int64  `json:"time_from"`
+	TimeTo     *int64  `json:"time_to"`
 }
 
 type PushMessageReq struct {

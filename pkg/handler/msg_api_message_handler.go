@@ -58,6 +58,10 @@ func deleteUserMessage(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
+		if len(req.MessageIds) == 0 && (req.TimeFrom == nil || req.TimeTo == nil) {
+			dto.ResponseBadRequest(ctx)
+			return
+		}
 		requestUid := ctx.GetInt64(uidKey)
 		if requestUid > 0 && requestUid != req.UId {
 			dto.ResponseForbidden(ctx)
