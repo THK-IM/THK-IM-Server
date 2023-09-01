@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/bwmarrin/snowflake"
 	"github.com/sirupsen/logrus"
@@ -87,33 +88,35 @@ func (d defaultUserSessionModel) UpdateUserSession(uIds []int64, sId int64, sess
 	}
 	for k, v := range sharedUIds {
 		if sessionName == nil && sessionRemark == nil && top == nil && status == nil && mute == nil && role == nil {
-			return nil
+			continue
 		}
-		updateMap := make(map[string]interface{})
+		sqlBuffer := bytes.Buffer{}
+		sqlBuffer.WriteString(fmt.Sprintf("update %s set ", d.genUserSessionTableName(k)))
 		if sessionName != nil {
-			updateMap["name"] = *sessionName
+			sqlBuffer.WriteString(fmt.Sprintf("name = '%s', ", *sessionName))
 		}
 		if sessionRemark != nil {
-			updateMap["remark"] = *sessionRemark
+			sqlBuffer.WriteString(fmt.Sprintf("remark = '%s', ", *sessionRemark))
 		}
 		if top != nil {
-			updateMap["top"] = *top
+			sqlBuffer.WriteString(fmt.Sprintf("top = %d, ", *top))
 		}
 		if status != nil {
-			updateMap["status"] = *status
+			sqlBuffer.WriteString(fmt.Sprintf("status = %d, ", *status))
 		}
 		if mute != nil {
-			updateMap["mute"] = *mute
+			sqlBuffer.WriteString(fmt.Sprintf("mute = %s, ", *mute))
 		}
 		if role != nil {
-			updateMap["role"] = *role
+			sqlBuffer.WriteString(fmt.Sprintf("role = %d, ", *role))
 		}
-		updateMap["update_time"] = time.Now().UnixMilli()
+		sqlBuffer.WriteString(fmt.Sprintf("update_time = %d ", time.Now().UnixMilli()))
+		sqlBuffer.WriteString("where session_id = ? and user_id in ? ")
 		db := tx
 		if db == nil {
 			db = d.db
 		}
-		err := tx.Table(d.genUserSessionTableName(k)).Where("session_id = ? and user_id in ? ", sId, v).Updates(updateMap).Error
+		err := tx.Exec(sqlBuffer.String(), sId, v).Error
 		if err != nil {
 			return err
 		}

@@ -57,6 +57,12 @@ func updateSession(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
+		if req.Mute != nil {
+			if *req.Mute != 0 && *req.Mute != 1 {
+				dto.ResponseBadRequest(ctx)
+				return
+			}
+		}
 		if id, err := strconv.Atoi(ctx.Param("id")); err != nil {
 			dto.ResponseBadRequest(ctx)
 			return

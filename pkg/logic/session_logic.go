@@ -151,7 +151,7 @@ func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (*dto.CreateSe
 func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) (err error) {
 	tx := l.appCtx.Database().Begin()
 	defer func() {
-		if err != nil {
+		if err == nil {
 			tx.Commit()
 		} else {
 			tx.Rollback()
@@ -174,9 +174,11 @@ func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) (err error) {
 	if req.Mute == nil {
 		mute = nil
 	} else if *req.Mute == 0 {
-		*mute = "mute & 0"
+		sql := "mute & (mute ^ 1)"
+		mute = &sql
 	} else if *req.Mute == 1 {
-		*mute = "mute | 1"
+		sql := "mute | 1"
+		mute = &sql
 	}
 	err = l.appCtx.UserSessionModel().UpdateUserSession(uIds, req.Id, req.Name, req.Remark, mute, nil, nil, nil, tx)
 	return
@@ -194,6 +196,8 @@ func (l *SessionLogic) UpdateUserSession(req dto.UpdateUserSessionReq) (err erro
 	err = l.appCtx.UserSessionModel().UpdateUserSession([]int64{req.UId}, req.SId, nil, nil, nil, req.Top, req.Status, nil, tx)
 	if err == nil {
 		err = l.appCtx.SessionUserModel().UpdateUser(req.SId, []int64{req.UId}, nil, req.Status, nil, tx)
+	} else {
+		l.appCtx.Logger().Error("UpdateUserSession, err", err)
 	}
 	return
 }

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/bwmarrin/snowflake"
@@ -30,15 +31,15 @@ type (
 	}
 
 	SessionUserModel interface {
-		FindAllSessionUsers(sId int64) ([]*SessionUser, error)
-		FindSessionUsers(sId int64, uIds []int64) ([]*SessionUser, error)
-		FindSessionUser(sId, uId int64) (*SessionUser, error)
-		FindSessionUserCount(sId int64) (int, error)
-		FindUIdsInSessionWithoutStatus(sId int64, status int, uIds []int64) []int64
-		FindUIdsInSessionContainStatus(sId int64, status int, uIds []int64) []int64
-		AddUser(session *Session, entityIds []int64, uIds []int64, role []int, maxCount int) (err error)
-		DelUser(session *Session, uIds []int64) (err error)
-		UpdateUser(sId int64, uIds []int64, role, status *int, mute *string, tx *gorm.DB) (err error)
+		FindAllSessionUsers(sessionId int64) ([]*SessionUser, error)
+		FindSessionUsers(sessionId int64, userIds []int64) ([]*SessionUser, error)
+		FindSessionUser(sessionId, userIds int64) (*SessionUser, error)
+		FindSessionUserCount(sessionId int64) (int, error)
+		FindUIdsInSessionWithoutStatus(sessionId int64, status int, uIds []int64) []int64
+		FindUIdsInSessionContainStatus(sessionId int64, status int, uIds []int64) []int64
+		AddUser(session *Session, entityIds []int64, userIds []int64, role []int, maxCount int) (err error)
+		DelUser(session *Session, userIds []int64) (err error)
+		UpdateUser(sessionId int64, userIds []int64, role, status *int, mute *string, tx *gorm.DB) (err error)
 	}
 
 	defaultSessionUserModel struct {
@@ -49,27 +50,27 @@ type (
 	}
 )
 
-func (d defaultSessionUserModel) FindAllSessionUsers(sId int64) ([]*SessionUser, error) {
+func (d defaultSessionUserModel) FindAllSessionUsers(sessionId int64) ([]*SessionUser, error) {
 	sessionUser := make([]*SessionUser, 0)
-	tableName := d.genSessionUserTableName(sId)
+	tableName := d.genSessionUserTableName(sessionId)
 	sqlStr := fmt.Sprintf("select * from %s where session_id = ?", tableName)
-	err := d.db.Raw(sqlStr, sId).Scan(sessionUser).Error
+	err := d.db.Raw(sqlStr, sessionId).Scan(&sessionUser).Error
 	return sessionUser, err
 }
 
-func (d defaultSessionUserModel) FindSessionUsers(sId int64, uIds []int64) ([]*SessionUser, error) {
+func (d defaultSessionUserModel) FindSessionUsers(sessionId int64, userIds []int64) ([]*SessionUser, error) {
 	sessionUser := make([]*SessionUser, 0)
-	tableName := d.genSessionUserTableName(sId)
+	tableName := d.genSessionUserTableName(sessionId)
 	sqlStr := fmt.Sprintf("select * from %s where session_id = ? and user_id in ? and deleted = 0", tableName)
-	err := d.db.Raw(sqlStr, sId, uIds).Scan(sessionUser).Error
+	err := d.db.Raw(sqlStr, sessionId, userIds).Scan(&sessionUser).Error
 	return sessionUser, err
 }
 
-func (d defaultSessionUserModel) FindSessionUser(sId, uId int64) (*SessionUser, error) {
+func (d defaultSessionUserModel) FindSessionUser(sessionId, userId int64) (*SessionUser, error) {
 	sessionUser := &SessionUser{}
-	tableName := d.genSessionUserTableName(sId)
+	tableName := d.genSessionUserTableName(sessionId)
 	sqlStr := fmt.Sprintf("select * from %s where session_id = ?  and user_id = ? and deleted = 0", tableName)
-	err := d.db.Raw(sqlStr, sId, uId).Scan(sessionUser).Error
+	err := d.db.Raw(sqlStr, sessionId, userId).Scan(sessionUser).Error
 	return sessionUser, err
 }
 
@@ -81,16 +82,16 @@ func (d defaultSessionUserModel) FindSessionUserCount(sessionId int64) (int, err
 	return count, err
 }
 
-func (d defaultSessionUserModel) FindUIdsInSessionWithoutStatus(sessionId int64, status int, uIds []int64) []int64 {
+func (d defaultSessionUserModel) FindUIdsInSessionWithoutStatus(sessionId int64, status int, userIds []int64) []int64 {
 	sessionUsers := make([]*SessionUser, 0)
 	uIdsCondition := ""
-	if len(uIds) > 0 {
+	if len(userIds) > 0 {
 		uIdsCondition = " and user_id in ? "
 	}
 	sqlStr := fmt.Sprintf("select user_id from %s where session_id = ? %s and status & ? = 0 and deleted = 0",
 		d.genSessionUserTableName(sessionId), uIdsCondition)
-	if len(uIds) > 0 {
-		tx := d.db.Raw(sqlStr, sessionId, uIds, status).Scan(&sessionUsers)
+	if len(userIds) > 0 {
+		tx := d.db.Raw(sqlStr, sessionId, userIds, status).Scan(&sessionUsers)
 		if tx.Error != nil {
 			d.logger.Error(tx.Error)
 		}
@@ -100,23 +101,23 @@ func (d defaultSessionUserModel) FindUIdsInSessionWithoutStatus(sessionId int64,
 			d.logger.Error(tx.Error)
 		}
 	}
-	userIds := make([]int64, 0)
+	uIds := make([]int64, 0)
 	for _, su := range sessionUsers {
-		userIds = append(userIds, su.UserId)
+		uIds = append(uIds, su.UserId)
 	}
-	return userIds
+	return uIds
 }
 
-func (d defaultSessionUserModel) FindUIdsInSessionContainStatus(sessionId int64, status int, uIds []int64) []int64 {
+func (d defaultSessionUserModel) FindUIdsInSessionContainStatus(sessionId int64, status int, userIds []int64) []int64 {
 	sessionUsers := make([]*SessionUser, 0)
 	uIdsCondition := ""
-	if len(uIds) > 0 {
+	if len(userIds) > 0 {
 		uIdsCondition = " and user_id in ? "
 	}
 	sqlStr := fmt.Sprintf("select user_id from %s where session_id = ? %s and status & ? > 0 and deleted = 0",
 		d.genSessionUserTableName(sessionId), uIdsCondition)
-	if len(uIds) > 0 {
-		tx := d.db.Raw(sqlStr, sessionId, uIds, status).Scan(&sessionUsers)
+	if len(userIds) > 0 {
+		tx := d.db.Raw(sqlStr, sessionId, userIds, status).Scan(&sessionUsers)
 		if tx.Error != nil {
 			d.logger.Error(tx.Error)
 		}
@@ -126,14 +127,14 @@ func (d defaultSessionUserModel) FindUIdsInSessionContainStatus(sessionId int64,
 			d.logger.Error(tx.Error)
 		}
 	}
-	userIds := make([]int64, 0)
+	uIds := make([]int64, 0)
 	for _, su := range sessionUsers {
-		userIds = append(userIds, su.UserId)
+		uIds = append(uIds, su.UserId)
 	}
-	return userIds
+	return uIds
 }
 
-func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, uIds []int64, role []int, maxCount int) (err error) {
+func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, userIds []int64, role []int, maxCount int) (err error) {
 	tx := d.db.Begin()
 	defer func() {
 		if err != nil {
@@ -145,11 +146,11 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, uI
 	count := 0
 	tableName := d.genSessionUserTableName(session.Id)
 	sqlStr := fmt.Sprintf("select count(0) from %s where session_id = ? and user_id not in ? and deleted = 0", tableName)
-	if err = tx.Raw(sqlStr, session.Id, uIds).Scan(&count).Error; err != nil {
+	if err = tx.Raw(sqlStr, session.Id, userIds).Scan(&count).Error; err != nil {
 		return err
 	}
 
-	if count > maxCount-len(uIds) {
+	if count > maxCount-len(userIds) {
 		return errorx.ErrGroupMemberCountBeyond
 	}
 
@@ -162,7 +163,7 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, uI
 	if session.Mute == 1 {
 		userMute = 1
 	}
-	for index, id := range uIds {
+	for index, id := range userIds {
 		if err = tx.Exec(sql1, session.Id, id, role[index], session.Type, t, t, role[index], 0, t).Error; err != nil {
 			return err
 		}
@@ -179,7 +180,7 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, uI
 	return nil
 }
 
-func (d defaultSessionUserModel) DelUser(session *Session, uIds []int64) (err error) {
+func (d defaultSessionUserModel) DelUser(session *Session, userIds []int64) (err error) {
 	tx := d.db.Begin()
 	defer func() {
 		if err != nil {
@@ -191,7 +192,7 @@ func (d defaultSessionUserModel) DelUser(session *Session, uIds []int64) (err er
 	t := time.Now().UnixMilli()
 	sql1 := "update " + d.genSessionUserTableName(session.Id) +
 		" set deleted = ?, update_time = ? where session_id = ? and user_id = ?"
-	for _, id := range uIds {
+	for _, id := range userIds {
 		if err = tx.Exec(sql1, 1, t, session.Id, id).Error; err != nil {
 			return err
 		}
@@ -205,27 +206,28 @@ func (d defaultSessionUserModel) DelUser(session *Session, uIds []int64) (err er
 	return nil
 }
 
-func (d defaultSessionUserModel) UpdateUser(sId int64, uIds []int64, role, status *int, mute *string, tx *gorm.DB) (err error) {
+func (d defaultSessionUserModel) UpdateUser(sessionId int64, userIds []int64, role, status *int, mute *string, tx *gorm.DB) (err error) {
 	if role == nil && status == nil && mute == nil {
 		return nil
 	}
 	t := time.Now().UnixMilli()
-	updates := make(map[string]interface{})
+	sqlBuffer := bytes.Buffer{}
+	sqlBuffer.WriteString(fmt.Sprintf("update %s set ", d.genSessionUserTableName(sessionId)))
 	if role != nil {
-		updates["role"] = *role
+		sqlBuffer.WriteString(fmt.Sprintf(" role = %d, ", *role))
 	}
 	if status != nil {
-		updates["status"] = *status
+		sqlBuffer.WriteString(fmt.Sprintf(" status = %d, ", *status))
 	}
 	if mute != nil {
-		updates["mute"] = *mute
+		sqlBuffer.WriteString(fmt.Sprintf(" mute = %s, ", *mute))
 	}
-	updates["update_time"] = t
+	sqlBuffer.WriteString(fmt.Sprintf(" update_time = %d where session_id = ? and user_id in ? ", t))
 	db := tx
 	if db == nil {
 		db = d.db
 	}
-	return tx.Table(d.genSessionUserTableName(sId)).Updates(updates).Where("session_id = ? and user_id in ?", sId, uIds).Error
+	return tx.Exec(sqlBuffer.String(), sessionId, userIds).Error
 }
 
 func (d defaultSessionUserModel) genUserSessionTableName(userId int64) string {

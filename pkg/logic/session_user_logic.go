@@ -40,18 +40,24 @@ func (l *SessionLogic) DelUser(sid int64, req dto.SessionDelUserReq) error {
 func (l *SessionLogic) UpdateSessionUser(req dto.SessionUserUpdateReq) (err error) {
 	db := l.appCtx.Database()
 	tx := db.Begin()
-	if err != nil {
-		tx.Rollback()
-	} else {
-		tx.Commit()
-	}
+	defer func() {
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
 	var mute *string
 	if req.Mute == nil {
 		mute = nil
 	} else if *req.Mute == 0 {
-		*mute = "mute & 0"
+		sql := "mute & (mute ^ 2)"
+		mute = &sql
 	} else if *req.Mute == 1 {
-		*mute = "mute | 2"
+		sql := "mute | 2"
+		mute = &sql
+	} else {
+		return errorx.ErrParamsError
 	}
 	err = l.appCtx.SessionUserModel().UpdateUser(req.SId, req.UIds, req.Role, nil, mute, tx)
 	return err

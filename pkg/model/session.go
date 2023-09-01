@@ -27,8 +27,8 @@ type (
 	}
 
 	SessionModel interface {
-		UpdateSession(id int64, name, remark *string, mute *int, tx *gorm.DB) error
-		FindSession(id int64, tx *gorm.DB) (*Session, error)
+		UpdateSession(sessionId int64, name, remark *string, mute *int, tx *gorm.DB) error
+		FindSession(sessionId int64, tx *gorm.DB) (*Session, error)
 		CreateEmptySession(sessionType int, tx *gorm.DB) (*Session, error)
 	}
 
@@ -40,7 +40,7 @@ type (
 	}
 )
 
-func (d defaultSessionModel) UpdateSession(id int64, name, remark *string, mute *int, tx *gorm.DB) error {
+func (d defaultSessionModel) UpdateSession(sessionId int64, name, remark *string, mute *int, tx *gorm.DB) error {
 	if name == nil && remark == nil && mute == nil {
 		return nil
 	}
@@ -59,22 +59,17 @@ func (d defaultSessionModel) UpdateSession(id int64, name, remark *string, mute 
 	if db == nil {
 		db = d.db
 	}
-	return db.Table(d.genSessionTableName(id)).Where("id = ?", id).Updates(updateMap).Error
+	return db.Table(d.genSessionTableName(sessionId)).Where("id = ?", sessionId).Updates(updateMap).Error
 }
 
-func (d defaultSessionModel) FindSession(id int64, tx *gorm.DB) (*Session, error) {
-	sqlStr := "select * from " + d.genSessionTableName(id) + " where id = ? and deleted = 0"
+func (d defaultSessionModel) FindSession(sessionId int64, tx *gorm.DB) (*Session, error) {
+	sqlStr := "select * from " + d.genSessionTableName(sessionId) + " where id = ? and deleted = 0"
 	session := &Session{}
-	var err error
-	if tx != nil {
-		tx = tx.Raw(sqlStr, id).Scan(session)
-		err = tx.Error
-	} else {
-		err = d.db.Raw(sqlStr, id).Scan(session).Error
+	db := tx
+	if tx == nil {
+		db = d.db
 	}
-	if err != nil {
-		return nil, err
-	}
+	err := db.Raw(sqlStr, sessionId).Scan(session).Error
 	return session, err
 }
 
