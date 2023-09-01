@@ -48,7 +48,7 @@ func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
 		if sessionMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不能发送撤回
 			return errorx.ErrMessageTypeNotSupport
 		}
-		if sessionMessage.Deleted == 1 { // 已经撤回了
+		if sessionMessage.Deleted == 1 { // 被删除了则不做处理
 			return nil
 		}
 		// 删除session的消息
@@ -57,7 +57,6 @@ func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
 		if errRevoke != nil {
 			return errRevoke
 		}
-		l.appCtx.Logger().Infof("RevokeUserMessage, affectedRow: %d, req: %v", affectedRow, req)
 		if affectedRow == 0 {
 			return nil
 		}

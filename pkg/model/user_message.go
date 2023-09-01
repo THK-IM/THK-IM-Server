@@ -36,7 +36,7 @@ type (
 		FindUserMessage(userId, sessionId, messageId int64) (*UserMessage, error)
 		InsertUserMessage(m *UserMessage) error
 		AckUserMessages(userId int64, sessionId int64, messageIds []int64) error
-		GetUserMessages(userId int64, ctime int, offset, count int) ([]*UserMessage, error)
+		GetUserMessages(userId int64, ctime int64, offset, count int) ([]*UserMessage, error)
 		DeleteMessages(userId int64, sessionId int64, messageIds []int64, from, to *int64) error
 		UpdateUserMessage(userId int64, sessionId int64, msgIds []int64, status int, content *string) error
 	}
@@ -67,7 +67,7 @@ func (d defaultUserMessageModel) AckUserMessages(userId int64, sessionId int64, 
 	return err
 }
 
-func (d defaultUserMessageModel) GetUserMessages(userId int64, ctime int, offset, count int) ([]*UserMessage, error) {
+func (d defaultUserMessageModel) GetUserMessages(userId int64, ctime int64, offset, count int) ([]*UserMessage, error) {
 	result := make([]*UserMessage, 0)
 	strSql := "select * from " + d.genUserMessageTableName(userId) + " where user_id = ? and deleted = 0 and (status = 0 or (create_time > ? and status & ? = 0)) order by create_time limit ? offset ?"
 

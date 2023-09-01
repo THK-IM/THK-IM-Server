@@ -4,7 +4,7 @@ type GetMessageReq struct {
 	UId    int64 `json:"u_id" form:"u_id"`
 	Offset int   `json:"offset" form:"offset"`
 	Count  int   `json:"count" form:"count"`
-	CTime  int   `json:"c_time" form:"c_time"`
+	CTime  int64 `json:"c_time" form:"c_time"`
 }
 
 type GetMessageRes struct {

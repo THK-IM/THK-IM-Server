@@ -316,7 +316,7 @@ func TestRevokeUserMessage(t *testing.T) {
 	uIds := make([]int64, 0)
 	uIds = append(uIds, 1696519117500059648)
 	msgIds := make([]int64, 0)
-	msgIds = append(msgIds, 1697450778714705920)
+	msgIds = append(msgIds, 1697446152502251520)
 	successChan := make(chan bool)
 	task := test_base.NewHttpTestTask(count, concurrent, func(index, channelIndex int, client http.Client) *test_base.HttpTestResult {
 		startTime := time.Now().UnixMilli()
@@ -386,7 +386,7 @@ func TestReeditUserMessage(t *testing.T) {
 	uIds := make([]int64, 0)
 	uIds = append(uIds, 1696519117500059648)
 	msgIds := make([]int64, 0)
-	msgIds = append(msgIds, 1697450778714705920)
+	msgIds = append(msgIds, 1697442921013317632)
 	successChan := make(chan bool)
 	task := test_base.NewHttpTestTask(count, concurrent, func(index, channelIndex int, client http.Client) *test_base.HttpTestResult {
 		startTime := time.Now().UnixMilli()
@@ -416,6 +416,72 @@ func TestReeditUserMessage(t *testing.T) {
 		} else {
 			duration := time.Now().UnixMilli() - startTime
 			return test_base.NewHttpTestResult(index, -1, 0, duration, errJson)
+		}
+	}, func(task *test_base.HttpTestTask) {
+		test_base.PrintHttpResults(task)
+		for _, result := range task.Results() {
+			if result.StatusCode() != http.StatusOK {
+				successChan <- false
+				return
+			}
+		}
+		successChan <- true
+		return
+	})
+	task.Start()
+
+	for {
+		select {
+		case success, opened := <-successChan:
+			if !opened {
+				t.Fail()
+			}
+			if success {
+				t.Skip()
+			} else {
+				t.Fail()
+			}
+			return
+		}
+	}
+}
+
+func TestGetUserMessages(t *testing.T) {
+	uri := "/message/latest"
+	url := fmt.Sprintf("%s%s", getTestEndPoint(), uri)
+	contentType := "application/json"
+	count := 1
+	concurrent := 1
+	sessionIds := make([]int64, 0)
+	sessionIds = append(sessionIds, 1696502911586013184)
+	uIds := make([]int64, 0)
+	uIds = append(uIds, 1696519117500059648)
+	cTimes := make([]int64, 0)
+	cTimes = append(cTimes, time.Now().UnixMilli())
+	successChan := make(chan bool)
+	task := test_base.NewHttpTestTask(count, concurrent, func(index, channelIndex int, client http.Client) *test_base.HttpTestResult {
+		startTime := time.Now().UnixMilli()
+		getLatestMessageReq := &dto.GetMessageReq{
+			UId:    uIds[index],
+			Offset: 0,
+			Count:  100,
+			CTime:  cTimes[index],
+		}
+		query := fmt.Sprintf("?u_id=%d&offset=%d&count=%d&c_time=%d", getLatestMessageReq.UId, getLatestMessageReq.Offset,
+			getLatestMessageReq.Count, getLatestMessageReq.CTime)
+		req, errReq := http.NewRequest("GET", fmt.Sprintf("%s%s", url, query), nil)
+		req.Header.Set("Content-Type", contentType)
+		if errReq != nil {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, -2, 0, duration, errReq)
+		}
+		response, errHttp := client.Do(req)
+		if errHttp != nil {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
+		} else {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
 		}
 	}, func(task *test_base.HttpTestTask) {
 		test_base.PrintHttpResults(task)
