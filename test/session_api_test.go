@@ -35,19 +35,18 @@ func TestCreateSingleSession(t *testing.T) {
 			Members:  []int64{userId, entityId},
 		}
 		dataBytes, errJson := json.Marshal(createSessionReq)
-		if errJson == nil {
-			body := bytes.NewReader(dataBytes)
-			response, errHttp := client.Post(url, contentType, body)
-			if errHttp != nil {
-				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
-			} else {
-				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
-			}
+		if errJson != nil {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, -2, 0, duration, errJson)
+		}
+		body := bytes.NewReader(dataBytes)
+		response, errHttp := client.Post(url, contentType, body)
+		if errHttp != nil {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
 		} else {
 			duration := time.Now().UnixMilli() - startTime
-			return test_base.NewHttpTestResult(index, -1, 0, duration, errJson)
+			return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
 		}
 	}, func(task *test_base.HttpTestTask) {
 		test_base.PrintHttpResults(task)
@@ -102,19 +101,18 @@ func TestCreateGroupSession(t *testing.T) {
 			Members:  members,
 		}
 		dataBytes, errJson := json.Marshal(createSessionReq)
-		if errJson == nil {
-			body := bytes.NewReader(dataBytes)
-			response, errHttp := client.Post(url, contentType, body)
-			if errHttp != nil {
-				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
-			} else {
-				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
-			}
-		} else {
+		if errJson != nil {
 			duration := time.Now().UnixMilli() - startTime
 			return test_base.NewHttpTestResult(index, -1, 0, duration, errJson)
+		}
+		body := bytes.NewReader(dataBytes)
+		response, errHttp := client.Post(url, contentType, body)
+		if errHttp != nil {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
+		} else {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
 		}
 	}, func(task *test_base.HttpTestTask) {
 		test_base.PrintHttpResults(task)
@@ -169,19 +167,18 @@ func TestCreateSuperGroupSession(t *testing.T) {
 			Members:  members,
 		}
 		dataBytes, errJson := json.Marshal(createSessionReq)
-		if errJson == nil {
-			body := bytes.NewReader(dataBytes)
-			response, errHttp := client.Post(url, contentType, body)
-			if errHttp != nil {
-				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
-			} else {
-				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
-			}
-		} else {
+		if errJson != nil {
 			duration := time.Now().UnixMilli() - startTime
 			return test_base.NewHttpTestResult(index, -1, 0, duration, errJson)
+		}
+		body := bytes.NewReader(dataBytes)
+		response, errHttp := client.Post(url, contentType, body)
+		if errHttp != nil {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
+		} else {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
 		}
 	}, func(task *test_base.HttpTestTask) {
 		test_base.PrintHttpResults(task)
@@ -241,25 +238,24 @@ func TestUpdateSession(t *testing.T) {
 			Remark: remarks[index],
 		}
 		dataBytes, errJson := json.Marshal(updateSessionReq)
-		if errJson == nil {
-			body := bytes.NewReader(dataBytes)
-			req, errReq := http.NewRequest("PUT", fmt.Sprintf("%s/%d", url, sessionIds[index]), body)
-			req.Header.Set("Content-Type", contentType)
-			if errReq != nil {
-				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, -2, 0, duration, errReq)
-			}
-			response, errHttp := client.Do(req)
-			if errHttp != nil {
-				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
-			} else {
-				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
-			}
-		} else {
+		if errJson != nil {
 			duration := time.Now().UnixMilli() - startTime
 			return test_base.NewHttpTestResult(index, -1, 0, duration, errJson)
+		}
+		body := bytes.NewReader(dataBytes)
+		req, errReq := http.NewRequest("PUT", fmt.Sprintf("%s/%d", url, sessionIds[index]), body)
+		req.Header.Set("Content-Type", contentType)
+		if errReq != nil {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, -2, 0, duration, errReq)
+		}
+		response, errHttp := client.Do(req)
+		if errHttp != nil {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
+		} else {
+			duration := time.Now().UnixMilli() - startTime
+			return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
 		}
 	}, func(task *test_base.HttpTestTask) {
 		test_base.PrintHttpResults(task)

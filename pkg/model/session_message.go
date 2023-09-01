@@ -48,7 +48,7 @@ type (
 		InsertMessage(clientId int64, fromUserId int64, sessionId int64, msgId int64, msgContent string,
 			msgType int, atUserIds *string, replayMsgId *int64) (*SessionMessage, error)
 		FindMessageByClientId(sessionId, clientId, fromUId int64) (*SessionMessage, error)
-		GetSessionMessages(sid int64, ctime int, offset, count int, msgIds []int64) ([]*SessionMessage, error)
+		GetSessionMessages(sessionId, ctime int64, offset, count int, msgIds []int64) ([]*SessionMessage, error)
 	}
 
 	defaultSessionMessageModel struct {
@@ -120,15 +120,15 @@ func (d defaultSessionMessageModel) FindMessageByClientId(sessionId, clientId, f
 	return result, err
 }
 
-func (d defaultSessionMessageModel) GetSessionMessages(sid int64, ctime int, offset, count int, msgIds []int64) ([]*SessionMessage, error) {
+func (d defaultSessionMessageModel) GetSessionMessages(sessionId, ctime int64, offset, count int, msgIds []int64) ([]*SessionMessage, error) {
 	result := make([]*SessionMessage, 0)
 	if len(msgIds) == 0 {
-		strSql := "select * from " + d.genSessionMessageTableName(sid) + " where session_id = ? and deleted = 0 and status & ? = 0 and create_time <= ? order by create_time desc limit ?,?"
-		err := d.db.Raw(strSql, sid, MsgStatusRevoke, ctime, offset, count).Scan(&result).Error
+		strSql := "select * from " + d.genSessionMessageTableName(sessionId) + " where session_id = ? and deleted = 0 and create_time <= ? order by create_time desc limit ?,?"
+		err := d.db.Raw(strSql, sessionId, ctime, offset, count).Scan(&result).Error
 		return result, err
 	} else {
-		strSql := "select * from " + d.genSessionMessageTableName(sid) + " where session_id = ? and msg_id in ? and create_time <= ? order by create_time desc limit ?,?"
-		err := d.db.Raw(strSql, sid, msgIds, ctime, offset, count).Scan(&result).Error
+		strSql := "select * from " + d.genSessionMessageTableName(sessionId) + " where session_id = ? and deleted = 0 and msg_id in ? and create_time <= ? order by create_time desc limit ?,?"
+		err := d.db.Raw(strSql, sessionId, msgIds, ctime, offset, count).Scan(&result).Error
 		return result, err
 	}
 }

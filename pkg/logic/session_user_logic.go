@@ -6,6 +6,19 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/model"
 )
 
+func (l *SessionLogic) GetUser(req dto.GetSessionUserReq) (*dto.GetSessionUserRes, error) {
+	sessionUser, err := l.appCtx.SessionUserModel().FindSessionUsersByMTime(req.SId, req.MTime, req.Role, req.Count)
+	if err != nil {
+		return nil, err
+	}
+	dtoSessionUsers := make([]*dto.SessionUser, 0)
+	for _, su := range sessionUser {
+		dtoSu := l.convSessionUser(su)
+		dtoSessionUsers = append(dtoSessionUsers, dtoSu)
+	}
+	return &dto.GetSessionUserRes{Data: dtoSessionUsers}, nil
+}
+
 func (l *SessionLogic) AddUser(sid int64, req dto.SessionAddUserReq) error {
 	session, err := l.appCtx.SessionModel().FindSession(sid, nil)
 	if err != nil {
@@ -61,4 +74,16 @@ func (l *SessionLogic) UpdateSessionUser(req dto.SessionUserUpdateReq) (err erro
 	}
 	err = l.appCtx.SessionUserModel().UpdateUser(req.SId, req.UIds, req.Role, nil, mute, tx)
 	return err
+}
+
+func (l *SessionLogic) convSessionUser(sessionUser *model.SessionUser) *dto.SessionUser {
+	return &dto.SessionUser{
+		SId:    sessionUser.SessionId,
+		Type:   sessionUser.Type,
+		Role:   sessionUser.Role,
+		Mute:   sessionUser.Mute,
+		Status: sessionUser.Status,
+		CTime:  sessionUser.CreateTime,
+		MTime:  sessionUser.UpdateTime,
+	}
 }

@@ -31,6 +31,7 @@ type (
 	}
 
 	SessionUserModel interface {
+		FindSessionUsersByMTime(sessionId, mTime int64, role *int, count int) ([]*SessionUser, error)
 		FindAllSessionUsers(sessionId int64) ([]*SessionUser, error)
 		FindSessionUsers(sessionId int64, userIds []int64) ([]*SessionUser, error)
 		FindSessionUser(sessionId, userIds int64) (*SessionUser, error)
@@ -49,6 +50,20 @@ type (
 		snowflakeNode *snowflake.Node
 	}
 )
+
+func (d defaultSessionUserModel) FindSessionUsersByMTime(sessionId, mTime int64, role *int, count int) ([]*SessionUser, error) {
+	sessionUser := make([]*SessionUser, 0)
+	tableName := d.genSessionUserTableName(sessionId)
+	var err error
+	if role == nil {
+		sqlStr := fmt.Sprintf("select * from %s where session_id = ? and deleted = 0 and update_time <= ? order by update_time desc limit 0, ?", tableName)
+		err = d.db.Raw(sqlStr, sessionId, mTime, count).Scan(&sessionUser).Error
+	} else {
+		sqlStr := fmt.Sprintf("select * from %s where session_id = ? and deleted = 0 and role = ? and update_time <= ? order by update_time desc limit 0, ?", tableName)
+		err = d.db.Raw(sqlStr, sessionId, *role, mTime, count).Scan(&sessionUser).Error
+	}
+	return sessionUser, err
+}
 
 func (d defaultSessionUserModel) FindAllSessionUsers(sessionId int64) ([]*SessionUser, error) {
 	sessionUser := make([]*SessionUser, 0)

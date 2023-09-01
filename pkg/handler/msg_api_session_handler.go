@@ -98,6 +98,10 @@ func updateUserSession(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
+		if req.Status != nil && (*req.Status < 0 || *req.Status > 3) {
+			dto.ResponseBadRequest(ctx)
+			return
+		}
 		requestUid := ctx.GetInt64(uidKey)
 		if requestUid > 0 && requestUid != req.UId {
 			dto.ResponseForbidden(ctx)
@@ -168,8 +172,8 @@ func getSessionMessages(appCtx *app.Context) gin.HandlerFunc {
 		var (
 			sessionId = ctx.Param("id")
 		)
-		iSessionId, e1 := strconv.ParseInt(sessionId, 10, 64)
-		if e1 != nil {
+		iSessionId, errSession := strconv.ParseInt(sessionId, 10, 64)
+		if errSession != nil {
 			dto.ResponseBadRequest(ctx)
 			return
 		}

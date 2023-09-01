@@ -40,7 +40,7 @@ type GetUserSessionsReq struct {
 
 type GetSessionMessageReq struct {
 	SId    int64  `json:"s_id" form:"id"`
-	CTime  int    `json:"c_time" form:"c_time"`
+	CTime  int64  `json:"c_time" form:"c_time"`
 	Offset int    `json:"offset" form:"offset"`
 	Count  int    `json:"count" form:"count"`
 	MsgIds string `json:"msg_ids" form:"msg_ids"`
@@ -67,8 +67,30 @@ type UserSession struct {
 	MTime    int64  `json:"m_time"`
 }
 
+type SessionUser struct {
+	SId    int64 `json:"s_id"`
+	UId    int64 `json:"u_id"`
+	Type   int   `json:"type"`
+	Mute   int   `json:"mute"`
+	Role   int   `json:"role"`
+	Status int   `json:"status"`
+	CTime  int64 `json:"c_time"`
+	MTime  int64 `json:"m_time"`
+}
+
 type GetUserSessionsRes struct {
 	Data []*UserSession `json:"data"`
+}
+
+type GetSessionUserReq struct {
+	SId   int64 `json:"s_id" form:"s_id"`
+	Role  *int  `json:"role" form:"role"`
+	MTime int64 `json:"m_time" form:"m_time"`
+	Count int   `json:"count" form:"count"`
+}
+
+type GetSessionUserRes struct {
+	Data []*SessionUser `json:"data"`
 }
 
 type SessionAddUserReq struct {

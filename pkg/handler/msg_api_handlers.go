@@ -24,6 +24,7 @@ func RegisterApiHandlers(ctx *app.Context) {
 	{
 		sessionGroup.POST("", createSession(ctx))                      // 创建/获取session
 		sessionGroup.PUT("/:id", updateSession(ctx))                   // 修改session相关信息
+		sessionGroup.GET("/:id/user", getSessionUser(ctx))             // 会话成员查询
 		sessionGroup.POST("/:id/user", addSessionUser(ctx))            // 会话增员
 		sessionGroup.DELETE("/:id/user", deleteSessionUser(ctx))       // 会话减员
 		sessionGroup.PUT("/:id/user", updateSessionUser(ctx))          // 会话成员修改

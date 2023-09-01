@@ -187,7 +187,7 @@ func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) (err error) {
 func (l *SessionLogic) UpdateUserSession(req dto.UpdateUserSessionReq) (err error) {
 	tx := l.appCtx.Database().Begin()
 	defer func() {
-		if err != nil {
+		if err == nil {
 			tx.Commit()
 		} else {
 			tx.Rollback()

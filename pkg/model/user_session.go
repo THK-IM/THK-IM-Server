@@ -38,12 +38,12 @@ type (
 	}
 
 	UserSessionModel interface {
-		RecoverUserSession(uId, sId, time int64) error
-		FindUserSessionByEntityId(uId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error)
-		UpdateUserSession(uId []int64, sId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int, tx *gorm.DB) error
-		FindEntityIdsInUserSession(uId int64, sId int64) []int64
-		GetUserSessions(uId, mTime int64, offset, count int) ([]*UserSession, error)
-		GetUserSession(uId, sId int64) (*UserSession, error)
+		RecoverUserSession(userId, sessionId, time int64) error
+		FindUserSessionByEntityId(userId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error)
+		UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int, tx *gorm.DB) error
+		FindEntityIdsInUserSession(userId, sessionId int64) []int64
+		GetUserSessions(userId, mTime int64, offset, count int) ([]*UserSession, error)
+		GetUserSession(userId, sessionId int64) (*UserSession, error)
 	}
 
 	defaultUserSessionModel struct {
@@ -66,20 +66,20 @@ func (d defaultUserSessionModel) RecoverUserSession(userId, sessionId, time int6
 
 }
 
-func (d defaultUserSessionModel) FindUserSessionByEntityId(uId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error) {
+func (d defaultUserSessionModel) FindUserSessionByEntityId(userId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error) {
 	userSession := &UserSession{}
-	sqlStr := "select * from " + d.genUserSessionTableName(uId) + " where user_id = ? and entity_id = ? and type = ?"
+	sqlStr := "select * from " + d.genUserSessionTableName(userId) + " where user_id = ? and entity_id = ? and type = ?"
 	if !containDeleted {
 		sqlStr += " and deleted = 0"
 	}
-	err := d.db.Raw(sqlStr, uId, entityId, sessionType).Scan(&userSession).Error
+	err := d.db.Raw(sqlStr, userId, entityId, sessionType).Scan(&userSession).Error
 	return userSession, err
 }
 
-func (d defaultUserSessionModel) UpdateUserSession(uIds []int64, sId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int, tx *gorm.DB) error {
+func (d defaultUserSessionModel) UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int, tx *gorm.DB) error {
 	// 分表uid数组
 	sharedUIds := make(map[int64][]int64, 0)
-	for _, uId := range uIds {
+	for _, uId := range userIds {
 		share := uId % d.shards
 		if sharedUIds[share] == nil {
 			sharedUIds[share] = make([]int64, 0)
@@ -116,7 +116,7 @@ func (d defaultUserSessionModel) UpdateUserSession(uIds []int64, sId int64, sess
 		if db == nil {
 			db = d.db
 		}
-		err := tx.Exec(sqlBuffer.String(), sId, v).Error
+		err := tx.Exec(sqlBuffer.String(), sessionId, v).Error
 		if err != nil {
 			return err
 		}
@@ -124,35 +124,35 @@ func (d defaultUserSessionModel) UpdateUserSession(uIds []int64, sId int64, sess
 	return nil
 }
 
-func (d defaultUserSessionModel) FindEntityIdsInUserSession(uId int64, sId int64) []int64 {
+func (d defaultUserSessionModel) FindEntityIdsInUserSession(userId, sessionId int64) []int64 {
 	entityIds := make([]int64, 0)
-	sqlStr := fmt.Sprintf("select entity_id from %s where user_id = ? and session_id = ? and deleted = 0", d.genUserSessionTableName(uId))
-	_ = d.db.Raw(sqlStr, uId, sId).Scan(&entityIds).Error
+	sqlStr := fmt.Sprintf("select entity_id from %s where user_id = ? and session_id = ? and deleted = 0", d.genUserSessionTableName(userId))
+	_ = d.db.Raw(sqlStr, userId, sessionId).Scan(&entityIds).Error
 	return entityIds
 }
 
-func (d defaultUserSessionModel) GetUserSessions(uId, mTime int64, offset, count int) ([]*UserSession, error) {
+func (d defaultUserSessionModel) GetUserSessions(userId, mTime int64, offset, count int) ([]*UserSession, error) {
 	userSessions := make([]*UserSession, 0)
-	sqlStr := "select * from " + d.genUserSessionTableName(uId) + " where user_id = ? and update_time > ? limit ? offset ?"
-	err := d.db.Raw(sqlStr, uId, mTime, count, offset).Scan(&userSessions).Error
+	sqlStr := "select * from " + d.genUserSessionTableName(userId) + " where user_id = ? and update_time <= ? limit ? offset ?"
+	err := d.db.Raw(sqlStr, userId, mTime, count, offset).Scan(&userSessions).Error
 	if err != nil {
 		return nil, err
 	}
 	return userSessions, nil
 }
 
-func (d defaultUserSessionModel) GetUserSession(uId, sId int64) (*UserSession, error) {
+func (d defaultUserSessionModel) GetUserSession(userId, sessionId int64) (*UserSession, error) {
 	userSession := &UserSession{}
-	sqlStr := "select * from " + d.genUserSessionTableName(uId) + " where user_id = ? and session_id = ?"
-	err := d.db.Raw(sqlStr, uId, sId).Scan(userSession).Error
+	sqlStr := "select * from " + d.genUserSessionTableName(userId) + " where user_id = ? and session_id = ?"
+	err := d.db.Raw(sqlStr, userId, sessionId).Scan(userSession).Error
 	if err != nil {
 		return nil, err
 	}
 	return userSession, nil
 }
 
-func (d defaultUserSessionModel) genUserSessionTableName(uId int64) string {
-	return "user_session_" + fmt.Sprintf("%02d", uId%(d.shards))
+func (d defaultUserSessionModel) genUserSessionTableName(userId int64) string {
+	return "user_session_" + fmt.Sprintf("%02d", userId%(d.shards))
 }
 
 func NewUserSessionModel(db *gorm.DB, logger *logrus.Entry, snowflakeNode *snowflake.Node, shards int64) UserSessionModel {
