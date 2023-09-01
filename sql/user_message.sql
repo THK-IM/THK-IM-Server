@@ -15,6 +15,5 @@ CREATE TABLE IF NOT EXISTS `user_message_%s`
     `deleted`      TINYINT NOT NULL DEFAULT 0 COMMENT '消息删除状态',
     INDEX `USER_MESSAGE_U_IDX` (`user_id`),
     INDEX `USER_MESSAGE_CTIME_IDX` (`create_time`),
-    UNIQUE INDEX `USER_MESSAGE_IDX` (`session_id`, `msg_id`),
-    UNIQUE INDEX `USER_MESSAGE_CLIENT_IDX` (`session_id`, `from_user_id`, `client_id`)
+    UNIQUE INDEX `USER_MESSAGE_IDX` (`user_id`, `session_id`, `msg_id`)
 );

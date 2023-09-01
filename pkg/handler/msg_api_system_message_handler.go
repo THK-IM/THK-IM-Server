@@ -9,6 +9,7 @@ import (
 )
 
 func pushSystemMessage(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewMessageLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.PushMessageReq
 		if err := ctx.BindJSON(&req); err != nil {
@@ -19,7 +20,6 @@ func pushSystemMessage(appCtx *app.Context) gin.HandlerFunc {
 		if req.Type == event.PushCommonEventType || req.Type == event.PushUserEventType ||
 			req.Type == event.PushFriendEventType || req.Type == event.PushGroupEventType ||
 			req.Type == event.PushOtherEventType {
-			l := logic.NewMessageLogic(ctx, appCtx)
 			if rsp, err := l.PushMessage(req); err != nil {
 				dto.ResponseInternalServerError(ctx, err)
 			} else {
@@ -33,6 +33,7 @@ func pushSystemMessage(appCtx *app.Context) gin.HandlerFunc {
 }
 
 func sendSystemMessage(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewMessageLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.SendMessageReq
 		if err := ctx.BindJSON(&req); err != nil {
@@ -40,7 +41,6 @@ func sendSystemMessage(appCtx *app.Context) gin.HandlerFunc {
 			return
 		}
 
-		l := logic.NewMessageLogic(ctx, appCtx)
 		if rsp, err := l.SendMessage(req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
 		} else {

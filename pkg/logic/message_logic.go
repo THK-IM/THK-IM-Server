@@ -8,20 +8,17 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/THK-IM/THK-IM-Server/pkg/event"
 	"github.com/THK-IM/THK-IM-Server/pkg/model"
-	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
 	"time"
 )
 
 type MessageLogic struct {
-	ctx    *gin.Context
 	appCtx *app.Context
 }
 
-func NewMessageLogic(ctx *gin.Context, appCtx *app.Context) MessageLogic {
+func NewMessageLogic(appCtx *app.Context) MessageLogic {
 	return MessageLogic{
-		ctx:    ctx,
 		appCtx: appCtx,
 	}
 }

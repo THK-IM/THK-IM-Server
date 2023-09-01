@@ -8,6 +8,7 @@ import (
 )
 
 func sendMessage(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewMessageLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.SendMessageReq
 		if err := ctx.BindJSON(&req); err != nil {
@@ -20,7 +21,6 @@ func sendMessage(appCtx *app.Context) gin.HandlerFunc {
 			return
 		}
 
-		l := logic.NewMessageLogic(ctx, appCtx)
 		if rsp, err := l.SendMessage(req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
 		} else {
@@ -30,6 +30,7 @@ func sendMessage(appCtx *app.Context) gin.HandlerFunc {
 }
 
 func getUserLatestMessages(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewMessageLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.GetMessageReq
 		if err := ctx.BindQuery(&req); err != nil {
@@ -41,7 +42,6 @@ func getUserLatestMessages(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseForbidden(ctx)
 			return
 		}
-		l := logic.NewMessageLogic(ctx, appCtx)
 		if resp, err := l.GetUserMessages(req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
 		} else {
@@ -51,6 +51,7 @@ func getUserLatestMessages(appCtx *app.Context) gin.HandlerFunc {
 }
 
 func deleteUserMessage(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewMessageLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.DeleteMessageReq
 		if err := ctx.BindJSON(&req); err != nil {
@@ -62,7 +63,6 @@ func deleteUserMessage(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseForbidden(ctx)
 			return
 		}
-		l := logic.NewMessageLogic(ctx, appCtx)
 		if err := l.DeleteUserMessage(&req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
 		} else {

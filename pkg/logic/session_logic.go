@@ -5,19 +5,16 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
 	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/THK-IM/THK-IM-Server/pkg/model"
-	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"time"
 )
 
 type SessionLogic struct {
-	ctx    *gin.Context
 	appCtx *app.Context
 }
 
-func NewSessionLogic(ctx *gin.Context, appCtx *app.Context) SessionLogic {
+func NewSessionLogic(appCtx *app.Context) SessionLogic {
 	return SessionLogic{
-		ctx:    ctx,
 		appCtx: appCtx,
 	}
 }

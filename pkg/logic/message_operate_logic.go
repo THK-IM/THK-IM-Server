@@ -15,7 +15,7 @@ func (l *MessageLogic) ReadUserMessages(req dto.ReadUserMessageReq) error {
 	// 对消息发件人发送已读消息
 	for _, msgId := range req.MsgIds {
 		if userMessage, err := l.appCtx.UserMessageModel().FindUserMessage(req.UId, req.SId, msgId); err == nil {
-			if userMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不需要发送已读
+			if userMessage.MsgType < 0 || userMessage.Status&model.MsgStatusRead == 1 { // 小于0的类型消息为状态操作消息或者已经是已读了，不需要发送已读
 				continue
 			}
 			sendMessageReq := dto.SendMessageReq{
@@ -42,10 +42,17 @@ func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
 		if sessionMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不能发送撤回
 			return errorx.ErrMessageTypeNotSupport
 		}
+		if sessionMessage.Deleted == 1 { // 已经撤回了
+			return nil
+		}
 		// 删除session的消息
-		_, err = l.appCtx.SessionMessageModel().UpdateSessionMessageStatus(sessionMessage.SessionId, sessionMessage.MsgId, sessionMessage.FromUserId, model.MsgStatusRevoke)
-		if err != nil {
-			return err
+		affectedRow, errRevoke := l.appCtx.SessionMessageModel().RevokeSessionMessage(sessionMessage.SessionId, sessionMessage.MsgId, sessionMessage.FromUserId)
+		if errRevoke != nil {
+			return errRevoke
+		}
+		l.appCtx.Logger().Infof("RevokeUserMessage, affectedRow: %d, req: %v", affectedRow, req)
+		if affectedRow == 0 {
+			return nil
 		}
 		sendMessageReq := dto.SendMessageReq{
 			CId:    l.genClientId(),

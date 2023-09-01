@@ -6,18 +6,15 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
 	"github.com/THK-IM/THK-IM-Server/pkg/event"
 	"github.com/THK-IM/THK-IM-Server/pkg/rpc"
-	"github.com/gin-gonic/gin"
 	"time"
 )
 
 type UserLogic struct {
-	ctx    *gin.Context
 	appCtx *app.Context
 }
 
-func NewUserLogic(ctx *gin.Context, appCtx *app.Context) UserLogic {
+func NewUserLogic(appCtx *app.Context) UserLogic {
 	return UserLogic{
-		ctx:    ctx,
 		appCtx: appCtx,
 	}
 }

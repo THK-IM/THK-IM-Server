@@ -18,6 +18,7 @@ func RegisterSaveMsgHandlers(appCtx *app.Context) {
 func onMqSaveMsgEventReceived(m map[string]interface{}, appCtx *app.Context) error {
 	msgJsonStr, okMsg := m[event.SaveMsgEventKey].(string)
 	receiversStr, okReceiver := m[event.SaveMsgUsersKey].(string)
+	appCtx.Logger().Info(msgJsonStr, okMsg, receiversStr, okReceiver)
 	if okMsg && okReceiver {
 		message := &dto.Message{}
 		err := json.Unmarshal([]byte(msgJsonStr), message)

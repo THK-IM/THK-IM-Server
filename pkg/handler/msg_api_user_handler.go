@@ -10,6 +10,7 @@ import (
 )
 
 func updateUserOnlineStatus(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewUserLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.PostUserOnlineReq
 		if err := ctx.BindJSON(&req); err != nil {
@@ -17,7 +18,6 @@ func updateUserOnlineStatus(appCtx *app.Context) gin.HandlerFunc {
 			return
 		}
 
-		l := logic.NewUserLogic(ctx, appCtx)
 		if err := l.UpdateUserOnlineStatus(&req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
 		} else {
@@ -27,6 +27,7 @@ func updateUserOnlineStatus(appCtx *app.Context) gin.HandlerFunc {
 }
 
 func getUsersOnlineStatus(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewUserLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.GetUsersOnlineStatusReq
 		if err := ctx.ShouldBindQuery(&req); err != nil {
@@ -49,7 +50,6 @@ func getUsersOnlineStatus(appCtx *app.Context) gin.HandlerFunc {
 			}
 		}
 
-		l := logic.NewUserLogic(ctx, appCtx)
 		if res, err := l.GetUsersOnlineStatus(uIds); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
 		} else {
@@ -59,13 +59,13 @@ func getUsersOnlineStatus(appCtx *app.Context) gin.HandlerFunc {
 }
 
 func kickOffUser(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewUserLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.KickUserReq
 		if err := ctx.ShouldBindJSON(&req); err != nil {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
-		l := logic.NewUserLogic(ctx, appCtx)
 		if err := l.KickUser(&req); err != nil {
 			dto.ResponseInternalServerError(ctx, err)
 		} else {

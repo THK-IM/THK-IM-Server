@@ -5,6 +5,7 @@ type HttpTestResult struct {
 	statusCode int   // 状态码
 	bodySize   int64 // 响应body大小
 	duration   int64 // 耗时 单位ms
+	err        error // 错误
 }
 
 func (h HttpTestResult) SerialNo() int {
@@ -23,11 +24,12 @@ func (h HttpTestResult) Duration() int64 {
 	return h.duration
 }
 
-func NewHttpTestResult(serialNo, statusCode int, bodySize, duration int64) *HttpTestResult {
+func NewHttpTestResult(serialNo, statusCode int, bodySize, duration int64, err error) *HttpTestResult {
 	return &HttpTestResult{
 		serialNo:   serialNo,
 		statusCode: statusCode,
 		bodySize:   bodySize,
 		duration:   duration,
+		err:        err,
 	}
 }

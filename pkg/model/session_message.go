@@ -42,7 +42,7 @@ type (
 
 	SessionMessageModel interface {
 		UpdateSessionMessageContent(sessionId, msgId, fUid int64, content string, status int) (int64, error)
-		UpdateSessionMessageStatus(sessionId, msgId, fUid int64, status int) (int64, error)
+		RevokeSessionMessage(sessionId, msgId int64, fUid int64) (int64, error)
 		FindSessionMessage(sessionId, msgId, fUid int64) (*SessionMessage, error)
 		DelMessages(sessionId int64, messageIds []int64, from, to int64) error
 		InsertMessage(clientId int64, fromUserId int64, sessionId int64, msgId int64, msgContent string,
@@ -65,10 +65,10 @@ func (d defaultSessionMessageModel) UpdateSessionMessageContent(sessionId, msgId
 	return d.db.RowsAffected, err
 }
 
-func (d defaultSessionMessageModel) UpdateSessionMessageStatus(sessionId, msgId int64, fUid int64, status int) (int64, error) {
-	sqlStr := fmt.Sprintf("update %s set status |= ? where session_id = ? and msg_id = ? and fUid = ? ", d.genSessionMessageTableName(sessionId))
-	err := d.db.Exec(sqlStr, status, sessionId, msgId, fUid).Error
-	return d.db.RowsAffected, err
+func (d defaultSessionMessageModel) RevokeSessionMessage(sessionId, msgId int64, fUid int64) (int64, error) {
+	sqlStr := fmt.Sprintf("update %s set deleted = 1 where session_id = ? and msg_id = ? and from_user_id = ? and deleted = 0", d.genSessionMessageTableName(sessionId))
+	tx := d.db.Exec(sqlStr, sessionId, msgId, fUid)
+	return tx.RowsAffected, tx.Error
 }
 
 func (d defaultSessionMessageModel) FindSessionMessage(sessionId, msgId, fUid int64) (*SessionMessage, error) {

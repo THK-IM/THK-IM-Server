@@ -101,7 +101,7 @@ func (d redisSubscriber) groupSubscribe(onMessageReceived OnMessageReceived) {
 
 func (d redisSubscriber) pendingMessage(onMessageReceived OnMessageReceived) {
 	ctx := context.Background()
-	ticker := time.NewTicker(time.Minute * time.Duration(d.retryTime))
+	ticker := time.NewTicker(time.Second * time.Duration(d.retryTime))
 	go func() {
 		for range ticker.C {
 			if pendingInfos, err := d.client.XPendingExt(ctx, &redis.XPendingExtArgs{
@@ -112,7 +112,7 @@ func (d redisSubscriber) pendingMessage(onMessageReceived OnMessageReceived) {
 				End:      "+",
 				Count:    10,
 			}).Result(); err != nil {
-				d.logger.Error(err)
+				d.logger.Errorf("pendingMessage read error: %s", err.Error())
 			} else {
 				for _, pendingInfo := range pendingInfos {
 					d.retryConsume(pendingInfo.ID, onMessageReceived)
@@ -125,7 +125,7 @@ func (d redisSubscriber) pendingMessage(onMessageReceived OnMessageReceived) {
 func (d redisSubscriber) retryConsume(id string, onMessageReceived OnMessageReceived) {
 	ctx := context.Background()
 	if messages, err := d.client.XRangeN(ctx, d.stream, id, "+", 1).Result(); err != nil {
-		d.logger.Error(err)
+		d.logger.Errorf("retryConsume error: %s", err.Error())
 	} else {
 		d.consumeMessages(messages, onMessageReceived)
 	}
@@ -139,8 +139,8 @@ func (d redisSubscriber) consumeMessages(messages []redis.XMessage, onMessageRec
 				d.client.XAck(ctx, d.stream, *d.group, msg.ID)
 			}
 		} else {
-			d.logger.Error(fmt.Sprintf("group: %v, client id: %s, msgId: %s, values: %v",
-				d.group, d.clientId, msg.ID, msg.Values))
+			d.logger.Error(fmt.Sprintf("err: %v, group: %v, client id: %s, msgId: %s, values: %v",
+				err, d.group, d.clientId, msg.ID, msg.Values))
 		}
 	}
 }

@@ -10,6 +10,7 @@ import (
 )
 
 func addSessionUser(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewSessionLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.SessionAddUserReq
 		if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -33,7 +34,6 @@ func addSessionUser(appCtx *app.Context) gin.HandlerFunc {
 			}
 		}
 
-		l := logic.NewSessionLogic(ctx, appCtx)
 		if e := l.AddUser(sessionId, req); e != nil {
 			dto.ResponseInternalServerError(ctx, e)
 		} else {
@@ -43,6 +43,7 @@ func addSessionUser(appCtx *app.Context) gin.HandlerFunc {
 }
 
 func deleteSessionUser(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewSessionLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.SessionDelUserReq
 		if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -64,7 +65,6 @@ func deleteSessionUser(appCtx *app.Context) gin.HandlerFunc {
 			}
 		}
 
-		l := logic.NewSessionLogic(ctx, appCtx)
 		if e := l.DelUser(sessionId, req); e != nil {
 			dto.ResponseInternalServerError(ctx, e)
 		} else {
@@ -74,6 +74,7 @@ func deleteSessionUser(appCtx *app.Context) gin.HandlerFunc {
 }
 
 func updateSessionUser(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewSessionLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.SessionUserUpdateReq
 		if err := ctx.ShouldBindJSON(&req); err != nil {
@@ -96,7 +97,6 @@ func updateSessionUser(appCtx *app.Context) gin.HandlerFunc {
 			}
 		}
 
-		l := logic.NewSessionLogic(ctx, appCtx)
 		if e := l.UpdateSessionUser(req); e != nil {
 			dto.ResponseInternalServerError(ctx, e)
 		} else {

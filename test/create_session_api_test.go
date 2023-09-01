@@ -40,14 +40,14 @@ func TestCreateSingleSession(t *testing.T) {
 			response, errHttp := client.Post(url, contentType, body)
 			if errHttp != nil {
 				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, 500, 0, duration)
+				return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
 			} else {
 				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration)
+				return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
 			}
 		} else {
 			duration := time.Now().UnixMilli() - startTime
-			return test_base.NewHttpTestResult(index, -1, 0, duration)
+			return test_base.NewHttpTestResult(index, -1, 0, duration, errJson)
 		}
 	}, func(task *test_base.HttpTestTask) {
 		test_base.PrintHttpResults(task)
@@ -107,14 +107,14 @@ func TestCreateGroupSession(t *testing.T) {
 			response, errHttp := client.Post(url, contentType, body)
 			if errHttp != nil {
 				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, 500, 0, duration)
+				return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
 			} else {
 				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration)
+				return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
 			}
 		} else {
 			duration := time.Now().UnixMilli() - startTime
-			return test_base.NewHttpTestResult(index, -1, 0, duration)
+			return test_base.NewHttpTestResult(index, -1, 0, duration, errJson)
 		}
 	}, func(task *test_base.HttpTestTask) {
 		test_base.PrintHttpResults(task)
@@ -174,14 +174,14 @@ func TestCreateSuperGroupSession(t *testing.T) {
 			response, errHttp := client.Post(url, contentType, body)
 			if errHttp != nil {
 				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, 500, 0, duration)
+				return test_base.NewHttpTestResult(index, 500, 0, duration, errHttp)
 			} else {
 				duration := time.Now().UnixMilli() - startTime
-				return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration)
+				return test_base.NewHttpTestResult(index, response.StatusCode, response.ContentLength, duration, nil)
 			}
 		} else {
 			duration := time.Now().UnixMilli() - startTime
-			return test_base.NewHttpTestResult(index, -1, 0, duration)
+			return test_base.NewHttpTestResult(index, -1, 0, duration, errJson)
 		}
 	}, func(task *test_base.HttpTestTask) {
 		test_base.PrintHttpResults(task)
