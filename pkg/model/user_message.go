@@ -98,10 +98,10 @@ func (d defaultUserMessageModel) DeleteMessages(userId int64, sessionId int64, m
 func (d defaultUserMessageModel) UpdateUserMessage(userId int64, sessionId int64, msgIds []int64, status int, content *string) error {
 	updateContent := ""
 	if content != nil {
-		updateContent = fmt.Sprintf(", content = %s", *content)
+		updateContent = fmt.Sprintf(", msg_content = '%s' ", *content)
 	}
 	sqlStr := fmt.Sprintf(
-		"update %s set status = status | ?  %s where user_id = ? and session_id = ? and msg_id in ? ",
+		"update %s set status = status | ? %s where user_id = ? and session_id = ? and msg_id in ? ",
 		d.genUserMessageTableName(userId), updateContent)
 	err := d.db.Exec(sqlStr, status, userId, sessionId, msgIds).Error
 	return err

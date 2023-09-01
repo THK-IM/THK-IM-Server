@@ -104,6 +104,7 @@ func (d redisSubscriber) pendingMessage(onMessageReceived OnMessageReceived) {
 	ticker := time.NewTicker(time.Second * time.Duration(d.retryTime))
 	go func() {
 		for range ticker.C {
+			d.logger.Info("start read pending message")
 			if pendingInfos, err := d.client.XPendingExt(ctx, &redis.XPendingExtArgs{
 				Stream:   d.stream,
 				Group:    *d.group,
