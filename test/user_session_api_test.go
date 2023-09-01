@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func TestGetUserSession(t *testing.T) {
+func TestUserSessionQuery(t *testing.T) {
 	uri := "/user_session"
 	contentType := "application/json"
 	count := 1
@@ -69,7 +69,7 @@ func TestGetUserSession(t *testing.T) {
 	}
 }
 
-func TestGetUserLatestSession(t *testing.T) {
+func TestUserLatestSessionQuery(t *testing.T) {
 	uri := "/user_session/latest"
 	contentType := "application/json"
 	count := 1

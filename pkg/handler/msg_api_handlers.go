@@ -58,7 +58,7 @@ func RegisterApiHandlers(ctx *app.Context) {
 		systemGroup.POST("/user/online", updateUserOnlineStatus(ctx)) // 更新用户在线状态
 		systemGroup.GET("/user/online", getUsersOnlineStatus(ctx))    // 获取用户上线状态
 		systemGroup.POST("/user/kickoff", kickOffUser(ctx))           // 踢下线用户
-		systemGroup.POST("/message", sendSystemMessage(ctx))          // 发送会话中的系统消息
+		systemGroup.POST("/message/send", sendSystemMessage(ctx))     // 发送会话中的系统消息
 		systemGroup.POST("/message/push", pushSystemMessage(ctx))     // 推送消息(用户消息/好友消息/群组消息/自定义消息)
 	}
 }

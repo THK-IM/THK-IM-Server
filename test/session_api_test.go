@@ -18,7 +18,7 @@ func getTestEndPoint() string {
 	return "http://127.0.0.1:10000"
 }
 
-func TestCreateSingleSession(t *testing.T) {
+func TestSingleSessionCreate(t *testing.T) {
 	uri := "/session"
 	url := fmt.Sprintf("%s%s", getTestEndPoint(), uri)
 	contentType := "application/json"
@@ -77,7 +77,7 @@ func TestCreateSingleSession(t *testing.T) {
 	}
 }
 
-func TestCreateGroupSession(t *testing.T) {
+func TestGroupSessionCreate(t *testing.T) {
 	uri := "/session"
 	url := fmt.Sprintf("%s%s", getTestEndPoint(), uri)
 	contentType := "application/json"
@@ -143,7 +143,7 @@ func TestCreateGroupSession(t *testing.T) {
 	}
 }
 
-func TestCreateSuperGroupSession(t *testing.T) {
+func TestSuperGroupSessionCreate(t *testing.T) {
 	uri := "/session"
 	url := fmt.Sprintf("%s%s", getTestEndPoint(), uri)
 	contentType := "application/json"
@@ -209,7 +209,7 @@ func TestCreateSuperGroupSession(t *testing.T) {
 	}
 }
 
-func TestUpdateSession(t *testing.T) {
+func TestSessionUpdate(t *testing.T) {
 	uri := "/session"
 	url := fmt.Sprintf("%s%s", getTestEndPoint(), uri)
 	contentType := "application/json"

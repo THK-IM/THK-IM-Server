@@ -8,7 +8,7 @@ type PostUserOnlineReq struct {
 }
 
 type GetUsersOnlineStatusReq struct {
-	UIds string `json:"u_ids" form:"u_ids"` // #号分割
+	UIds []int64 `json:"u_ids" form:"u_ids"`
 }
 
 type UserOnlineStatus struct {

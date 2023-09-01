@@ -14,7 +14,7 @@ func getSessionUser(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req dto.GetSessionUserReq
 		if err := ctx.ShouldBindQuery(&req); err != nil {
-			appCtx.Logger().Warn(err)
+			appCtx.Logger().Warn(err.Error())
 			dto.ResponseBadRequest(ctx)
 			return
 		}
@@ -45,7 +45,7 @@ func getSessionUser(appCtx *app.Context) gin.HandlerFunc {
 			}
 		}
 		if resp, err := l.GetUser(req); err != nil {
-			appCtx.Logger().Warn(err)
+			appCtx.Logger().Warn(err.Error())
 			dto.ResponseInternalServerError(ctx, err)
 		} else {
 			dto.ResponseSuccess(ctx, resp)
@@ -58,7 +58,7 @@ func addSessionUser(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req dto.SessionAddUserReq
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			appCtx.Logger().Warn(err)
+			appCtx.Logger().Warn(err.Error())
 			dto.ResponseBadRequest(ctx)
 			return
 		}
@@ -71,7 +71,7 @@ func addSessionUser(appCtx *app.Context) gin.HandlerFunc {
 
 		sessionId, errSessionId := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		if errSessionId != nil {
-			appCtx.Logger().Warn(errSessionId)
+			appCtx.Logger().Warn(errSessionId.Error())
 			dto.ResponseBadRequest(ctx)
 			return
 		}
@@ -86,7 +86,7 @@ func addSessionUser(appCtx *app.Context) gin.HandlerFunc {
 		}
 
 		if e := l.AddUser(sessionId, req); e != nil {
-			appCtx.Logger().Warn(e)
+			appCtx.Logger().Warn(e.Error())
 			dto.ResponseInternalServerError(ctx, e)
 		} else {
 			dto.ResponseSuccess(ctx, nil)
@@ -99,14 +99,14 @@ func deleteSessionUser(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req dto.SessionDelUserReq
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			appCtx.Logger().Warn(err)
+			appCtx.Logger().Warn(err.Error())
 			dto.ResponseBadRequest(ctx)
 			return
 		}
 
 		sessionId, errSessionId := strconv.ParseInt(ctx.Param("id"), 10, 64)
 		if errSessionId != nil {
-			appCtx.Logger().Warn(errSessionId)
+			appCtx.Logger().Warn(errSessionId.Error())
 			dto.ResponseBadRequest(ctx)
 			return
 		}
@@ -121,7 +121,7 @@ func deleteSessionUser(appCtx *app.Context) gin.HandlerFunc {
 		}
 
 		if e := l.DelUser(sessionId, req); e != nil {
-			appCtx.Logger().Warn(e)
+			appCtx.Logger().Warn(e.Error())
 			dto.ResponseInternalServerError(ctx, e)
 		} else {
 			dto.ResponseSuccess(ctx, nil)
@@ -134,7 +134,7 @@ func updateSessionUser(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req dto.SessionUserUpdateReq
 		if err := ctx.ShouldBindJSON(&req); err != nil {
-			appCtx.Logger().Warn(err)
+			appCtx.Logger().Warn(err.Error())
 			dto.ResponseBadRequest(ctx)
 			return
 		}
@@ -167,7 +167,7 @@ func updateSessionUser(appCtx *app.Context) gin.HandlerFunc {
 		}
 
 		if e := l.UpdateSessionUser(req); e != nil {
-			appCtx.Logger().Warn(e)
+			appCtx.Logger().Warn(e.Error())
 			dto.ResponseInternalServerError(ctx, e)
 		} else {
 			dto.ResponseSuccess(ctx, nil)

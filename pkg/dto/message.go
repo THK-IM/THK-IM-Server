@@ -21,8 +21,8 @@ type DeleteMessageReq struct {
 
 type PushMessageReq struct {
 	UIds        []int64 `json:"u_ids" binding:"required"`
-	Type        int     `json:"type" binding:"required"`
-	SubType     int     `json:"sub_type" binding:"required"`
+	Type        int     `json:"type"`
+	SubType     int     `json:"sub_type"`
 	Body        string  `json:"body" binding:"required"`
 	OfflinePush bool    `json:"offline_push"`
 }

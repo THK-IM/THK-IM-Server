@@ -18,6 +18,7 @@ func userTokenAuth(appCtx *app.Context) gin.HandlerFunc {
 	return func(context *gin.Context) {
 		token := context.Request.Header.Get(tokenKey)
 		if token == "" {
+			appCtx.Logger().Warn("token nil error")
 			dto.ResponseUnauthorized(context)
 			context.Abort()
 			return
@@ -25,6 +26,7 @@ func userTokenAuth(appCtx *app.Context) gin.HandlerFunc {
 		req := rpc.GetUserIdByTokenReq{Token: token}
 		res, err := appCtx.RpcUserApi().GetUserIdByToken(req)
 		if err != nil {
+			appCtx.Logger().Warn("token error")
 			dto.ResponseUnauthorized(context)
 			context.Abort()
 		} else {

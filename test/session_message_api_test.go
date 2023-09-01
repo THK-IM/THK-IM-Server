@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-func TestSessionMessageQury(t *testing.T) {
+func TestSessionMessageQuery(t *testing.T) {
 	uri := "/session"
 	contentType := "application/json"
 	count := 1
@@ -75,7 +75,7 @@ func TestSessionMessageQury(t *testing.T) {
 	}
 }
 
-func TestDeleteSessionMessages(t *testing.T) {
+func TestSessionMessageDelete(t *testing.T) {
 	uri := "/session"
 	contentType := "application/json"
 	count := 1
