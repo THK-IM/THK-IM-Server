@@ -54,7 +54,7 @@ Metric:
   PushInterval: 10
 Sdks:
   - Name: msg-api
-    Endpoint: "http://127.0.0.1:18000"
+    Endpoint: "http://127.0.0.1:10000"
   - Name: user-api
     Endpoint: "http://127.0.0.1:18000"
 MsgQueue:

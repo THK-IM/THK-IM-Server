@@ -102,11 +102,21 @@ func (c *Context) UserOnlineStatusModel() model.UserOnlineStatusModel {
 }
 
 func (c *Context) RpcMsgApi() rpc.MsgApi {
-	return c.rpcMap["msg-api"].(rpc.MsgApi)
+	api, ok := c.rpcMap["msg-api"].(rpc.MsgApi)
+	if ok {
+		return api
+	} else {
+		return nil
+	}
 }
 
 func (c *Context) RpcUserApi() rpc.UserApi {
-	return c.rpcMap["user-api"].(rpc.UserApi)
+	api, ok := c.rpcMap["user-api"].(rpc.UserApi)
+	if ok {
+		return api
+	} else {
+		return nil
+	}
 }
 
 func (c *Context) Collector() *metric.Collector {

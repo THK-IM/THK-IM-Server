@@ -30,9 +30,13 @@ func (l *UserLogic) UpdateUserOnlineStatus(req *dto.PostUserOnlineReq) error {
 			UserId:   req.UId,
 			IsOnline: req.Online,
 		}
-		if e := l.appCtx.RpcUserApi().PostUserOnlineStatus(onlineReq); e != nil {
-			l.appCtx.Logger().Errorf("UpdateUserOnlineStatus, RpcUserApi, call err: %v", e)
+		userApi := l.appCtx.RpcUserApi()
+		if userApi != nil {
+			if e := userApi.PostUserOnlineStatus(onlineReq); e != nil {
+				l.appCtx.Logger().Errorf("UpdateUserOnlineStatus, RpcUserApi, call err: %v", e)
+			}
 		}
+
 	}()
 	return err
 }

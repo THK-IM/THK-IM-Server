@@ -18,7 +18,7 @@ func createSession(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
-
+		appCtx.Logger().Info(req)
 		if req.Type == model.SingleSessionType && (req.EntityId != nil || len(req.Members) != 2) {
 			appCtx.Logger().Warn("param type error")
 			dto.ResponseBadRequest(ctx)

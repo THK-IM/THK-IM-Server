@@ -16,6 +16,13 @@ import (
 func RegisterMsgPushHandlers(ctx *app.Context) {
 	server := ctx.WebsocketServer()
 	server.SetUidGetter(func(token string, pf string) (int64, error) {
+		if ctx.Config().Mode == "debug" {
+			if uId, err := strconv.Atoi(token); err != nil {
+				return 0, err
+			} else {
+				return int64(uId), nil
+			}
+		}
 		req := rpc.GetUserIdByTokenReq{Token: token, Platform: pf}
 		if res, err := ctx.RpcUserApi().GetUserIdByToken(req); err != nil {
 			return 0, err

@@ -55,8 +55,8 @@ Metric:
 Sdks:
   - Name: msg-api
     Endpoint: "http://127.0.0.1:18000"
-  - Name: user-api
-    Endpoint: "http://127.0.0.1:18000"
+#  - Name: user-api
+#    Endpoint: "http://127.0.0.1:18000"
 MsgQueue:
   Publishers:
     - Topic: "push_msg"

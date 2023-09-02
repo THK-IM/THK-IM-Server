@@ -84,6 +84,7 @@ func (w *WsClient) read() {
 			if err := w.server.RemoveClient(w.info.UId, e.Error(), w); err != nil {
 				w.logger.Error(w.info, err)
 			}
+			break
 		}
 	}
 }

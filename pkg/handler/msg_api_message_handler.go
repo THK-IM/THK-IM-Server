@@ -12,16 +12,19 @@ func sendMessage(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req dto.SendMessageReq
 		if err := ctx.BindJSON(&req); err != nil {
+			appCtx.Logger().Warn(err.Error())
 			dto.ResponseBadRequest(ctx)
 			return
 		}
 		requestUid := ctx.GetInt64(uidKey)
 		if requestUid > 0 && requestUid != req.FUid {
+			appCtx.Logger().Warn("permission error")
 			dto.ResponseForbidden(ctx)
 			return
 		}
 
 		if rsp, err := l.SendMessage(req); err != nil {
+			appCtx.Logger().Warn(err.Error())
 			dto.ResponseInternalServerError(ctx, err)
 		} else {
 			dto.ResponseSuccess(ctx, rsp)
