@@ -7,14 +7,18 @@ type CreateSessionReq struct {
 }
 
 type CreateSessionRes struct {
-	SId      int64 `json:"s_id"`
-	EntityId int64 `json:"entity_id"`
-	Type     int   `json:"type"`
-	CTime    int64 `json:"c_time"`
-	MTime    int64 `json:"m_time"`
-	Top      int64 `json:"top"`
-	Status   int   `json:"status"`
-	Success  bool  `json:"success"` // 如果之前已经创建，false
+	SId      int64  `json:"s_id"`
+	EntityId int64  `json:"entity_id"`
+	Type     int    `json:"type"`
+	Name     string `json:"name"`
+	Remark   string `json:"remark"`
+	Mute     int    `json:"mute"`
+	Role     int    `json:"role"`
+	CTime    int64  `json:"c_time"`
+	MTime    int64  `json:"m_time"`
+	Top      int64  `json:"top"`
+	Status   int    `json:"status"`
+	Success  bool   `json:"success"` // 如果之前已经创建，false
 }
 
 type UpdateSessionReq struct {
