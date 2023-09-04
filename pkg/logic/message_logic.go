@@ -61,10 +61,10 @@ func (l *MessageLogic) GetUserMessages(req dto.GetMessageReq) (*dto.GetMessageRe
 	}
 	messages := make([]*dto.Message, 0)
 	for _, userMessage := range userMessages {
-		userMessageV3 := l.convUserMessage2Message(userMessage)
-		messages = append(messages, userMessageV3)
+		message := l.convUserMessage2Message(userMessage)
+		messages = append(messages, message)
 	}
-	return &dto.GetMessageRes{Data: userMessages}, nil
+	return &dto.GetMessageRes{Data: messages}, nil
 }
 
 func (l *MessageLogic) GetSessionMessages(req dto.GetSessionMessageReq) (*dto.GetMessageRes, error) {

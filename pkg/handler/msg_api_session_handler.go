@@ -19,11 +19,11 @@ func createSession(appCtx *app.Context) gin.HandlerFunc {
 			return
 		}
 		appCtx.Logger().Info(req)
-		if req.Type == model.SingleSessionType && (req.EntityId != nil || len(req.Members) != 2) {
+		if req.Type == model.SingleSessionType && (req.EntityId == 0 || len(req.Members) != 0) {
 			appCtx.Logger().Warn("param type error")
 			dto.ResponseBadRequest(ctx)
 			return
-		} else if (req.Type == model.GroupSessionType || req.Type == model.SuperGroupSessionType) && req.EntityId == nil {
+		} else if (req.Type == model.GroupSessionType || req.Type == model.SuperGroupSessionType) && req.EntityId == 0 {
 			appCtx.Logger().Warn("param type error")
 			dto.ResponseBadRequest(ctx)
 			return
