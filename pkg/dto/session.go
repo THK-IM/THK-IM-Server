@@ -1,9 +1,10 @@
 package dto
 
 type CreateSessionReq struct {
+	UId      int64   `json:"u_id" binding:"required"`
 	Type     int     `json:"type" binding:"required"`
-	EntityId *int64  `json:"entity_id"`                  // type 为group或supergroup时存在
-	Members  []int64 `json:"members" binding:"required"` // 数组0位置为创建人
+	EntityId int64   `json:"entity_id"` // 单聊type为对方用户id,group或supergroup为群id
+	Members  []int64 `json:"members"`   // 单聊时不用提交该字段
 }
 
 type CreateSessionRes struct {

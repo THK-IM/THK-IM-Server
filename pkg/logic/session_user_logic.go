@@ -38,7 +38,14 @@ func (l *SessionLogic) AddUser(sid int64, req dto.SessionAddUserReq) error {
 		roles = append(roles, req.Role)
 		entityIds = append(entityIds, req.EntityId)
 	}
-	return l.appCtx.SessionUserModel().AddUser(session, entityIds, req.UIds, roles, maxCount)
+	tx := l.appCtx.Database().Begin()
+	err = l.appCtx.SessionUserModel().AddUser(session, entityIds, req.UIds, roles, maxCount, tx)
+	if err != nil {
+		_ = tx.Rollback()
+	} else {
+		err = tx.Commit().Error
+	}
+	return err
 }
 
 func (l *SessionLogic) DelUser(sid int64, req dto.SessionDelUserReq) error {
@@ -55,9 +62,9 @@ func (l *SessionLogic) UpdateSessionUser(req dto.SessionUserUpdateReq) (err erro
 	tx := db.Begin()
 	defer func() {
 		if err != nil {
-			tx.Rollback()
+			_ = tx.Rollback().Error
 		} else {
-			tx.Commit()
+			err = tx.Commit().Error
 		}
 	}()
 	var mute *string
