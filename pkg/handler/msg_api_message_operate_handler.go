@@ -16,6 +16,11 @@ func ackUserMessages(appCtx *app.Context) gin.HandlerFunc {
 			dto.ResponseBadRequest(ctx)
 			return
 		}
+		if len(req.MsgIds) == 0 {
+			appCtx.Logger().Warn("param msgIds error")
+			dto.ResponseBadRequest(ctx)
+			return
+		}
 		requestUid := ctx.GetInt64(uidKey)
 		if requestUid > 0 && requestUid != req.UId {
 			appCtx.Logger().Warn("param uid error")
