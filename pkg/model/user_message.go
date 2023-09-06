@@ -9,10 +9,12 @@ import (
 )
 
 const (
-	MsgStatusAcked  = 1
-	MsgStatusRead   = 2
-	MsgStatusRevoke = 4
-	MsgStatusReedit = 8
+	MsgStatusAcked      = 1
+	MsgStatusClientRead = 2 // 客户端已读
+	MsgStatusServerRead = 4 // 服务端已读
+	MsgStatusRead       = MsgStatusClientRead | MsgStatusServerRead
+	MsgStatusRevoke     = 8
+	MsgStatusReedit     = 16
 )
 
 type (
