@@ -4,3 +4,4 @@ main
 logs
 **.DS_Store
 **/**.DS_Store
+data

@@ -31,8 +31,8 @@ func TestSingleSessionCreate(t *testing.T) {
 		entityId := int64(index + 1)
 		createSessionReq := &dto.CreateSessionReq{
 			Type:     model.SingleSessionType,
-			EntityId: nil,
-			Members:  []int64{userId, entityId},
+			EntityId: entityId,
+			Members:  []int64{userId},
 		}
 		dataBytes, errJson := json.Marshal(createSessionReq)
 		if errJson != nil {
@@ -97,7 +97,7 @@ func TestGroupSessionCreate(t *testing.T) {
 		}
 		createSessionReq := &dto.CreateSessionReq{
 			Type:     model.GroupSessionType,
-			EntityId: &entityId,
+			EntityId: entityId,
 			Members:  members,
 		}
 		dataBytes, errJson := json.Marshal(createSessionReq)
@@ -163,7 +163,7 @@ func TestSuperGroupSessionCreate(t *testing.T) {
 		}
 		createSessionReq := &dto.CreateSessionReq{
 			Type:     model.SuperGroupSessionType,
-			EntityId: &entityId,
+			EntityId: entityId,
 			Members:  members,
 		}
 		dataBytes, errJson := json.Marshal(createSessionReq)
