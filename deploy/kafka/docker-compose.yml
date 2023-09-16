@@ -41,7 +41,7 @@ services:
       # broker.id，必须唯一
       - KAFKA_BROKER_ID=1
     volumes:
-      - ./1:/bitnami/kafka
+      - ./data/1:/bitnami/kafka
     #extra_hosts:
       #- "kafka1:云服务器IP"
       #- "kafka2:云服务器IP"
@@ -84,7 +84,7 @@ services:
       # broker.id，必须唯一
       - KAFKA_BROKER_ID=2
     volumes:
-      - ./2:/bitnami/kafka
+      - ./data/2:/bitnami/kafka
   kafka3:
     image: 'bitnami/kafka:3.5.1'
     networks:
@@ -123,7 +123,7 @@ services:
       # broker.id，必须唯一
       - KAFKA_BROKER_ID=3
     volumes:
-      - ./3:/bitnami/kafka
+      - ./data/3:/bitnami/kafka
   kafka-ui:
     image: provectuslabs/kafka-ui:b32ab0143679bd3224f097a9de0eefad4e60f8d6
     networks:
@@ -133,7 +133,7 @@ services:
     ports:
       - 9091:8080
     volumes:
-      - ./ui/localtime:/etc/localtime
+      - ./data/ui/localtime:/etc/localtime
     environment:
       # 集群名称
       - KAFKA_CLUSTERS_0_NAME=local
