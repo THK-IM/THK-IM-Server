@@ -22,14 +22,14 @@ Logg:
   RetainAge: 720
   RotationAge: 1
 RedisSource:
-  Endpoint: "{{redis_endpoint}}"
+  Endpoint: ${REDIS_ENDPOINT}
   Uri: "/0"
   MaxIdleConn: 8
   MaxOpenConn: 16
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
 DataSource:
-  Endpoint: "{{mysql_endpoint}}"
+  Endpoint: ${MYSQL_ENDPOINT}
   Uri: "/thk_im?charset=utf8mb4&parseTime=True&loc=Local"
   MaxIdleConn: 10
   MaxOpenConn: 20
@@ -46,8 +46,16 @@ Models:
     Shards: 5
   - Name: "user_message"
     Shards: 5
+  - Name: "object"
+    Shards: 5
   - Name: "user_online_status"
     Shards: 1
+ObjectStorage:
+  Endpoint: ${OS_ENDPOINT}
+  Bucket: ${OS_BUCKET}
+  AK: ${OS_AK}
+  SK: ${OS_SK}
+  Region: us-east-1
 Metric:
   Endpoint: "/metrics"
   PushGateway: ""
@@ -63,7 +71,7 @@ MsgQueue:
       RedisPublisher:
         MaxQueueLen: 100000
         RedisSource:
-          Endpoint: "{{redis_endpoint}}"
+          Endpoint: ${REDIS_ENDPOINT}
           Uri: "/0"
           MaxIdleConn: 2
           MaxOpenConn: 4
@@ -73,7 +81,7 @@ MsgQueue:
       RedisPublisher:
         MaxQueueLen: 100000
         RedisSource:
-          Endpoint: "{{redis_endpoint}}"
+          Endpoint: ${REDIS_ENDPOINT}
           Uri: "/0"
           MaxIdleConn: 2
           MaxOpenConn: 4

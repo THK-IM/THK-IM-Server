@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/conf"
 	"github.com/sirupsen/logrus"
+	"io"
 	"net/http"
 	"time"
 )
@@ -58,8 +59,8 @@ func (d defaultUserApi) PostUserOnlineStatus(req PostUserOnlineReq) error {
 		return e
 	}
 	if res.StatusCode != http.StatusOK {
-		body := make([]byte, 0)
-		if _, e = res.Body.Read(body); e == nil {
+		body, errBody := io.ReadAll(res.Body)
+		if errBody == nil {
 			e = errors.New(string(body))
 			d.logger.Error(e)
 			return e
@@ -81,8 +82,8 @@ func (d defaultUserApi) GetUserIdByToken(req GetUserIdByTokenReq) (*GetUserIdByT
 		return nil, e
 	}
 	if res.StatusCode != http.StatusOK {
-		body := make([]byte, 0)
-		if _, e = res.Body.Read(body); e == nil {
+		body, errBody := io.ReadAll(res.Body)
+		if errBody == nil {
 			e = errors.New(string(body))
 			d.logger.Error(e)
 			return nil, e
@@ -92,8 +93,8 @@ func (d defaultUserApi) GetUserIdByToken(req GetUserIdByTokenReq) (*GetUserIdByT
 			return nil, e
 		}
 	} else {
-		body := make([]byte, 0)
-		if _, e = res.Body.Read(body); e == nil {
+		body, errBody := io.ReadAll(res.Body)
+		if errBody == nil {
 			tokenRes := &GetUserIdByTokenRes{}
 			e = json.Unmarshal(body, tokenRes)
 			if e != nil {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/conf"
 	"github.com/THK-IM/THK-IM-Server/pkg/conf/loader"
-	"github.com/THK-IM/THK-IM-Server/pkg/mq"
+	"github.com/THK-IM/THK-IM-Server/pkg/service/mq"
 	"testing"
 	"time"
 )

@@ -24,6 +24,8 @@ func LoadModels(modeConfigs []conf.Model, database *gorm.DB, logger *logrus.Entr
 			m = model.NewUserSessionModel(database, logger, snowflakeNode, ms.Shards)
 		} else if ms.Name == "user_message" {
 			m = model.NewUserMessageModel(database, logger, snowflakeNode, ms.Shards)
+		} else if ms.Name == "object" {
+			m = model.NewObjectModel(database, logger, snowflakeNode, ms.Shards)
 		} else if ms.Name == "user_online_status" {
 			m = model.NewUserOnlineStatusModel(database, logger, snowflakeNode, ms.Shards)
 		}

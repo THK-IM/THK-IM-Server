@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/conf"
 	"github.com/redis/go-redis/v9"
-	"os"
-	"strings"
 	"time"
 )
 
@@ -13,13 +11,7 @@ func LoadRedis(source *conf.RedisSource) *redis.Client {
 	if source == nil {
 		return nil
 	}
-	endpoint := source.Endpoint
-	if strings.HasPrefix(source.Endpoint, "{{") && strings.HasSuffix(source.Endpoint, "}}") {
-		endpointEnvKey := strings.Replace(source.Endpoint, "{{", "", -1)
-		endpointEnvKey = strings.Replace(endpointEnvKey, "}}", "", -1)
-		endpoint = os.Getenv(endpointEnvKey)
-	}
-	opt, err := redis.ParseURL(fmt.Sprintf("%s%s", endpoint, source.Uri))
+	opt, err := redis.ParseURL(fmt.Sprintf("%s%s", source.Endpoint, source.Uri))
 	if err != nil {
 		panic(err)
 	}

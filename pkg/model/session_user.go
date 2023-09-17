@@ -34,7 +34,7 @@ type (
 		FindSessionUsersByMTime(sessionId, mTime int64, role *int, count int) ([]*SessionUser, error)
 		FindAllSessionUsers(sessionId int64) ([]*SessionUser, error)
 		FindSessionUsers(sessionId int64, userIds []int64) ([]*SessionUser, error)
-		FindSessionUser(sessionId, userIds int64) (*SessionUser, error)
+		FindSessionUser(sessionId, userId int64) (*SessionUser, error)
 		FindSessionUserCount(sessionId int64) (int, error)
 		FindUIdsInSessionWithoutStatus(sessionId int64, status int, uIds []int64) []int64
 		FindUIdsInSessionContainStatus(sessionId int64, status int, uIds []int64) []int64

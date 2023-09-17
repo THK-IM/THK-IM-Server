@@ -7,7 +7,7 @@ Logg:
   RetainAge: 720
   RotationAge: 1
 RedisSource:
-  Endpoint: "{{redis_endpoint}}"
+  Endpoint: ${REDIS_ENDPOINT}
   Uri: "/0"
   MaxIdleConn: 8
   MaxOpenConn: 16

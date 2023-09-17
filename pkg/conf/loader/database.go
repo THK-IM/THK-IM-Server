@@ -8,8 +8,6 @@ import (
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
-	"os"
-	"strings"
 	"time"
 )
 
@@ -42,16 +40,10 @@ func LoadDataBase(entry *logrus.Entry, source *conf.DataSource) *gorm.DB {
 	if source == nil {
 		return nil
 	}
-	endpoint := source.Endpoint
-	if strings.HasPrefix(source.Endpoint, "{{") && strings.HasSuffix(source.Endpoint, "}}") {
-		endpointEnvKey := strings.Replace(source.Endpoint, "{{", "", -1)
-		endpointEnvKey = strings.Replace(endpointEnvKey, "}}", "", -1)
-		endpoint = os.Getenv(endpointEnvKey)
-	}
 	logg := &DBLogger{
 		logger: entry,
 	}
-	db, errOpen := gorm.Open(mysql.Open(fmt.Sprintf("%s%s", endpoint, source.Uri)), &gorm.Config{
+	db, errOpen := gorm.Open(mysql.Open(fmt.Sprintf("%s%s", source.Endpoint, source.Uri)), &gorm.Config{
 		Logger: logg,
 	})
 	if errOpen != nil {

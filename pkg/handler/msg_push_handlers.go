@@ -8,7 +8,7 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/THK-IM/THK-IM-Server/pkg/event"
 	"github.com/THK-IM/THK-IM-Server/pkg/rpc"
-	"github.com/THK-IM/THK-IM-Server/pkg/websocket"
+	websocket2 "github.com/THK-IM/THK-IM-Server/pkg/service/websocket"
 	"strconv"
 	"time"
 )
@@ -30,7 +30,7 @@ func RegisterMsgPushHandlers(ctx *app.Context) {
 			return res.UserId, nil
 		}
 	})
-	server.SetOnClientConnected(func(client websocket.Client) {
+	server.SetOnClientConnected(func(client websocket2.Client) {
 		ctx.Logger().Infof("OnClientConnected: %v", client.Info())
 		{
 			// 下发服务器时间
@@ -82,12 +82,12 @@ func RegisterMsgPushHandlers(ctx *app.Context) {
 		}
 	})
 
-	server.SetOnClientClosed(func(client websocket.Client) {
+	server.SetOnClientClosed(func(client websocket2.Client) {
 		ctx.Logger().Infof("OnClientClosed: %v", client.Info())
 		sendUserOnlineStatus(ctx, client, false)
 	})
 
-	server.SetOnClientMsgReceived(func(msg string, client websocket.Client) {
+	server.SetOnClientMsgReceived(func(msg string, client websocket2.Client) {
 		wsBody := &event.PushBody{}
 		if err := json.Unmarshal([]byte(msg), wsBody); err != nil {
 			ctx.Logger().Errorf("json Unmarshal err: %s, msg: %s", err.Error(), msg)
@@ -105,7 +105,7 @@ func RegisterMsgPushHandlers(ctx *app.Context) {
 	})
 }
 
-func onMqPushMsgReceived(m map[string]interface{}, server websocket.Server, ctx *app.Context) error {
+func onMqPushMsgReceived(m map[string]interface{}, server websocket2.Server, ctx *app.Context) error {
 	ctx.Logger().Info(m)
 	eventType, okType := m[event.PushEventTypeKey].(string)
 	eventSubtype, okSubType := m[event.PushEventSubTypeKey].(string)
@@ -133,7 +133,7 @@ func onMqPushMsgReceived(m map[string]interface{}, server websocket.Server, ctx 
 	}
 }
 
-func onWsClientMsgReceived(ctx *app.Context, client websocket.Client, ty, subType int, body string) error {
+func onWsClientMsgReceived(ctx *app.Context, client websocket2.Client, ty, subType int, body string) error {
 	if ty == event.PushCommonEventType {
 		if subType == 1 {
 			return onWsHeatBeatMsgReceived(ctx, client, body)
@@ -144,7 +144,7 @@ func onWsClientMsgReceived(ctx *app.Context, client websocket.Client, ty, subTyp
 	return nil
 }
 
-func onWsHeatBeatMsgReceived(ctx *app.Context, client websocket.Client, body string) error {
+func onWsHeatBeatMsgReceived(ctx *app.Context, client websocket2.Client, body string) error {
 	// 心跳
 	heatBody := &event.PushBody{
 		Type:    event.PushCommonEventType,
@@ -160,7 +160,7 @@ func onWsHeatBeatMsgReceived(ctx *app.Context, client websocket.Client, body str
 	return client.WriteMessage(string(heatBeat))
 }
 
-func sendUserOnlineStatus(ctx *app.Context, client websocket.Client, online bool) {
+func sendUserOnlineStatus(ctx *app.Context, client websocket2.Client, online bool) {
 	now := time.Now().UnixMilli()
 	client.SetLastOnlineTime(now)
 	req := dto.PostUserOnlineReq{
@@ -174,7 +174,7 @@ func sendUserOnlineStatus(ctx *app.Context, client websocket.Client, online bool
 	}
 }
 
-func onMqServerEventReceived(m map[string]interface{}, server websocket.Server, ctx *app.Context) error {
+func onMqServerEventReceived(m map[string]interface{}, server websocket2.Server, ctx *app.Context) error {
 	tp, okType := m[event.ServerEventTypeKey].(string)
 	receivers, okReceivers := m[event.ServerEventReceiversKey].(string)
 	body, okBody := m[event.ServerEventBodyKey].(string)

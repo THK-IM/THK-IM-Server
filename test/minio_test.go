@@ -33,7 +33,7 @@ func TestGenerateSignPostParams(t *testing.T) {
 		fmt.Println(err)
 		t.Fail()
 	}
-	err = policy.SetKey("sample-15s.mp3")
+	err = policy.SetKey("1/sample-111s.mp3")
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()

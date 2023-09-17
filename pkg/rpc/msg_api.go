@@ -8,6 +8,7 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/conf"
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
 	"github.com/sirupsen/logrus"
+	"io"
 	"net/http"
 	"time"
 )
@@ -42,8 +43,8 @@ func (d defaultMsgApi) PostUserOnlineStatus(req dto.PostUserOnlineReq) error {
 		return e
 	}
 	if res.StatusCode != http.StatusOK {
-		body := make([]byte, 0)
-		if _, e = res.Body.Read(body); e == nil {
+		body, errBody := io.ReadAll(res.Body)
+		if errBody == nil {
 			e = errors.New(string(body))
 			d.logger.Error(e)
 			return e

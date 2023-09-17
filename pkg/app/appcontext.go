@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/conf"
 	"github.com/THK-IM/THK-IM-Server/pkg/conf/loader"
-	"github.com/THK-IM/THK-IM-Server/pkg/metric"
 	"github.com/THK-IM/THK-IM-Server/pkg/model"
-	"github.com/THK-IM/THK-IM-Server/pkg/mq"
 	"github.com/THK-IM/THK-IM-Server/pkg/rpc"
-	"github.com/THK-IM/THK-IM-Server/pkg/websocket"
+	"github.com/THK-IM/THK-IM-Server/pkg/service/metric"
+	"github.com/THK-IM/THK-IM-Server/pkg/service/mq"
+	"github.com/THK-IM/THK-IM-Server/pkg/service/object"
+	"github.com/THK-IM/THK-IM-Server/pkg/service/websocket"
 	"github.com/bwmarrin/snowflake"
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -26,11 +27,16 @@ type Context struct {
 	collector       *metric.Collector
 	snowflakeNode   *snowflake.Node
 	httpEngine      *gin.Engine
+	objectStorage   object.Storage
 	websocketServer websocket.Server
 	rpcMap          map[string]interface{}
 	modelMap        map[string]interface{}
 	publisherMap    map[string]mq.Publisher
 	subscriberMap   map[string]mq.Subscriber
+}
+
+func (c *Context) ObjectStorage() object.Storage {
+	return c.objectStorage
 }
 
 func (c *Context) ServerEventPublisher() mq.Publisher {
@@ -95,6 +101,10 @@ func (c *Context) UserMessageModel() model.UserMessageModel {
 
 func (c *Context) UserSessionModel() model.UserSessionModel {
 	return c.modelMap["user_session"].(model.UserSessionModel)
+}
+
+func (c *Context) ObjectModel() model.ObjectModel {
+	return c.modelMap["object"].(model.ObjectModel)
 }
 
 func (c *Context) UserOnlineStatusModel() model.UserOnlineStatusModel {
@@ -176,6 +186,11 @@ func NewAppContext(config *conf.Config, httpEngine *gin.Engine) *Context {
 	if config.Sdks != nil {
 		ctx.rpcMap = loader.LoadSdks(config.Sdks, logger)
 	}
+
+	if config.ObjectStorage != nil {
+		ctx.objectStorage = object.NewMinioStorage(logger, config.ObjectStorage)
+	}
+
 	if config.WebSocket != nil {
 		ctx.websocketServer = websocket.NewServer(config.WebSocket, logger, httpEngine, snowflakeNode, config.Mode)
 	}

@@ -52,6 +52,16 @@ func RegisterApiHandlers(ctx *app.Context) {
 		messageGroup.GET("/latest", getUserLatestMessages(ctx)) // 获取最近消息
 	}
 
+	// 如果提供内置对象存储服务，则开放接口
+	if ctx.ObjectStorage() != nil {
+		objectGroup := httpEngine.Group("/object")
+		objectGroup.Use(authMiddleware)
+		{
+			objectGroup.GET("/upload_params", getUploadParams(ctx)) // 获取对象上传参数
+			objectGroup.GET("/:id", getObject(ctx))                 // 获取对象,鉴权后重定向到签名后的minio地址
+		}
+	}
+
 	systemGroup := httpEngine.Group("/system")
 	systemGroup.Use(ipAuth)
 	{

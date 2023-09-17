@@ -55,6 +55,14 @@ type (
 		ConnTimeout     int64  `yaml:"ConnTimeout"`     // 单位:秒
 	}
 
+	ObjectStorage struct {
+		Endpoint string `yaml:"Endpoint"`
+		Bucket   string `yaml:"Bucket"`
+		AK       string `yaml:"AK"`
+		SK       string `yaml:"SK"`
+		Region   string `yaml:"Region"`
+	}
+
 	Metric struct {
 		Endpoint     string `yaml:"Endpoint"`
 		PushGateway  string `yaml:"PushGateway"`
@@ -115,22 +123,23 @@ type (
 	}
 
 	Config struct {
-		Name        string       `yaml:"Name"`
-		Host        string       `yaml:"Host"`
-		Port        string       `yaml:"Port"`
-		Mode        string       `yaml:"Mode"`
-		DeployMode  string       `yaml:"DeployMode"`
-		IpWhiteList string       `yaml:"IpWhiteList"`
-		IM          *IM          `yaml:"IM"`
-		WebSocket   *WebSocket   `yaml:"WebSocket"`
-		Logg        *Logg        `yaml:"Logg"`
-		Sdks        []Sdk        `yaml:"Sdks"`
-		Node        *Node        `yaml:"Node"`
-		DataSource  *DataSource  `yaml:"DataSource"`
-		RedisSource *RedisSource `yaml:"RedisSource"`
-		Models      []Model      `yaml:"Models"`
-		Metric      *Metric      `yaml:"Metric"`
-		MsgQueue    MsgQueue     `yaml:"MsgQueue"`
+		Name          string         `yaml:"Name"`
+		Host          string         `yaml:"Host"`
+		Port          string         `yaml:"Port"`
+		Mode          string         `yaml:"Mode"`
+		DeployMode    string         `yaml:"DeployMode"`
+		IpWhiteList   string         `yaml:"IpWhiteList"`
+		IM            *IM            `yaml:"IM"`
+		WebSocket     *WebSocket     `yaml:"WebSocket"`
+		Logg          *Logg          `yaml:"Logg"`
+		Sdks          []Sdk          `yaml:"Sdks"`
+		Node          *Node          `yaml:"Node"`
+		ObjectStorage *ObjectStorage `yaml:"ObjectStorage"`
+		DataSource    *DataSource    `yaml:"DataSource"`
+		RedisSource   *RedisSource   `yaml:"RedisSource"`
+		Models        []Model        `yaml:"Models"`
+		Metric        *Metric        `yaml:"Metric"`
+		MsgQueue      MsgQueue       `yaml:"MsgQueue"`
 	}
 )
 
@@ -139,12 +148,14 @@ func Load(f string) (c Config, err error) {
 	if e != nil {
 		return c, e
 	}
-	err = yaml.Unmarshal(data, &c)
+	expanded := os.ExpandEnv(string(data))
+	err = yaml.Unmarshal([]byte(expanded), &c)
 	return c, err
 }
 
 func LoadString(data string) (c Config, err error) {
-	err = yaml.Unmarshal([]byte(data), &c)
+	expanded := os.ExpandEnv(data)
+	err = yaml.Unmarshal([]byte(expanded), &c)
 	return c, err
 }
 

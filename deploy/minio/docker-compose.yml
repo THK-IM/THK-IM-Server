@@ -4,11 +4,11 @@ services:
     image: "quay.io/minio/minio:RELEASE.2023-09-07T02-05-02Z"
     container_name: minio
     ports:
-      - "19000:9000"
-      - "19090:9090"
+      - "9000:9000"
+      - "19090:19090"
     volumes:
       - "./data/1:/data"
-    command: server /data --console-address ":9090"
+    command: server /data --console-address ":19090"
     environment:
       MINIO_ROOT_USER: thk_im
       MINIO_ROOT_PASSWORD: thk_im_mino

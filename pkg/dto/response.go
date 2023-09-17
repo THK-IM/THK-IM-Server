@@ -66,3 +66,7 @@ func ResponseSuccess(ctx *gin.Context, data interface{}) {
 		ctx.JSON(http.StatusOK, data)
 	}
 }
+
+func Redirect302(ctx *gin.Context, url string) {
+	ctx.Redirect(302, url)
+}

@@ -22,19 +22,20 @@ Logg:
   RetainAge: 720
   RotationAge: 1
 RedisSource:
-  Endpoint: "{{redis_endpoint}}"
+  Endpoint: ${REDIS_ENDPOINT}
   Uri: "/0"
   MaxIdleConn: 8
   MaxOpenConn: 16
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
 DataSource:
-  Endpoint: "{{mysql_endpoint}}"
+  Endpoint: ${MYSQL_ENDPOINT}
   Uri: "/thk_im?charset=utf8mb4&parseTime=True&loc=Local"
   MaxIdleConn: 10
   MaxOpenConn: 20
   ConnMaxLifeTime: 3600
   ConnMaxIdleTime: 3600
+ObjectStorage:
 Models:
   - Name: "user_message"
     Shards: 5
@@ -53,7 +54,7 @@ MsgQueue:
       Group: "storage"
       RedisSubscriber:
         RedisSource:
-          Endpoint: "{{redis_endpoint}}"
+          Endpoint: ${REDIS_ENDPOINT}
           Uri: "/0"
           MaxIdleConn: 2
           MaxOpenConn: 4
