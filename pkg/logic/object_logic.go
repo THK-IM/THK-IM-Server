@@ -29,7 +29,7 @@ func (l *ObjectLogic) GetUploadParams(req dto.GetUploadParamsReq) (*dto.GetUploa
 		return nil, errorx.ErrPermission
 	}
 	now := time.Now().UnixMilli()
-	uploadKey := fmt.Sprintf("%d/%d/%d-%s", req.SId, req.UId, now, req.FileName)
+	uploadKey := fmt.Sprintf("session-%d/%d/%d-%s", req.SId, req.UId, now, req.FName)
 	uploadUrl, uploadMethod, params, err := l.appCtx.ObjectStorage().GetUploadParams(uploadKey)
 	if err != nil {
 		return nil, err

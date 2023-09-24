@@ -12,7 +12,7 @@ func updateUserOnlineStatus(appCtx *app.Context) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		var req dto.PostUserOnlineReq
 		if err := ctx.BindJSON(&req); err != nil {
-			appCtx.Logger().Warn(err.Error())
+			appCtx.Logger().Warnf("req: %+v, err: %s", req, err.Error())
 			dto.ResponseBadRequest(ctx)
 			return
 		}

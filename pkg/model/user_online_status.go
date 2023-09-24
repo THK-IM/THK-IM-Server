@@ -48,21 +48,21 @@ func (d defaultUserOnlineStatusModel) UpdateUserOnlineStatus(userId, onlineTime,
 	// 通过user_id和platform找到连接
 	sqlStr := "select * from " + d.genUserOnlineStatusTable(userId) + " where user_id = ? and platform = ?"
 	onlineStatus := &UserOnlineStatus{}
-	err = tx.Raw(sqlStr, userId, connId, platform).Scan(onlineStatus).Error
+	err = tx.Raw(sqlStr, userId, platform).Scan(onlineStatus).Error
 	if err != nil && err != gorm.ErrRecordNotFound {
 		return
 	}
 	if onlineStatus.UserId <= 0 {
 		// 插入
 		sqlStr = "insert into " + d.genUserOnlineStatusTable(userId) +
-			" (user_id, online_time, conn_id, platform) values (?, ?, ?, ?, ?)"
+			" (user_id, online_time, conn_id, platform) values (?, ?, ?, ?)"
 		return tx.Exec(sqlStr, userId, onlineTime, connId, platform).Error
 	} else {
 		// 连接id不相等时更新
 		if connId != onlineStatus.ConnId {
 			sqlStr = "update " + d.genUserOnlineStatusTable(userId) +
 				" set online_time = ? where user_id = ? and conn_id = ?"
-			return tx.Exec(sqlStr, onlineTime, userId, connId, onlineTime).Error
+			return tx.Exec(sqlStr, onlineTime, userId, connId).Error
 		} else {
 			return nil
 		}

@@ -2,9 +2,9 @@ package dto
 
 type (
 	GetUploadParamsReq struct {
-		SId      int64  `json:"s_id" form:"s_id"`
-		UId      int64  `json:"u_id" form:"u_id"`
-		FileName string `json:"fn" form:"fn"`
+		SId   int64  `json:"s_id" form:"s_id"`
+		UId   int64  `json:"u_id" form:"u_id"`
+		FName string `json:"f_name" form:"f_name"`
 	}
 
 	GetUploadParamsRes struct {

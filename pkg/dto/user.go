@@ -6,7 +6,7 @@ type PostUserOnlineReq struct {
 	Online    bool   `json:"online"`
 	UId       int64  `json:"u_id" binding:"required"`
 	Platform  string `json:"platform" binding:"required"`
-	Timestamp int64  `json:"timestamp" binding:"timestamp"`
+	Timestamp int64  `json:"timestamp" binding:"required"`
 }
 
 type GetUsersOnlineStatusReq struct {
