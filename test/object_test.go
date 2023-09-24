@@ -25,11 +25,11 @@ func TestUpload(t *testing.T) {
 	task := test_base.NewHttpTestTask(count, concurrent, func(index, channelIndex int, client http.Client) *test_base.HttpTestResult {
 		startTime := time.Now().UnixMilli()
 		reqParams := &dto.GetUploadParamsReq{
-			SId:      1696502911665704960,
-			UId:      1874068156324778273,
-			FileName: "image1.png",
+			SId:   1696502911665704960,
+			UId:   1874068156324778273,
+			FName: "image1.png",
 		}
-		query := fmt.Sprintf("?s_id=%d&u_id=%d&fn=%s", reqParams.SId, reqParams.UId, reqParams.FileName)
+		query := fmt.Sprintf("?s_id=%d&u_id=%d&fn=%s", reqParams.SId, reqParams.UId, reqParams.FName)
 		req, errReq := http.NewRequest("GET", fmt.Sprintf("%s%s", url, query), nil)
 		req.Header.Set("Content-Type", contentType)
 		if errReq != nil {
