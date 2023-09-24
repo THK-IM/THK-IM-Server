@@ -1,14 +1,13 @@
 package rpc
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/conf"
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
+	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
-	"io"
 	"net/http"
 	"time"
 )
@@ -25,7 +24,7 @@ type (
 	defaultMsgApi struct {
 		endpoint string
 		logger   *logrus.Entry
-		client   *http.Client
+		client   *resty.Client
 	}
 )
 
@@ -36,23 +35,17 @@ func (d defaultMsgApi) PostUserOnlineStatus(req dto.PostUserOnlineReq) error {
 		return err
 	}
 	url := fmt.Sprintf("%s%s", d.endpoint, msgApiPostUserOnlineStatusUrl)
-	bodyReader := bytes.NewReader(dataBytes)
-	res, e := d.client.Post(url, contentType, bodyReader)
-	if e != nil {
+	res, errRequest := d.client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(dataBytes).
+		Post(url)
+	if errRequest != nil {
+		return errRequest
+	}
+	if res.StatusCode() != http.StatusOK {
+		e := errors.New(string(res.Body()))
 		d.logger.Error(e)
 		return e
-	}
-	if res.StatusCode != http.StatusOK {
-		body, errBody := io.ReadAll(res.Body)
-		if errBody == nil {
-			e = errors.New(string(body))
-			d.logger.Error(e)
-			return e
-		} else {
-			e = errors.New(fmt.Sprintf("StatusCode:%d", res.StatusCode))
-			d.logger.Error(e)
-			return e
-		}
 	} else {
 		return nil
 	}
@@ -62,13 +55,15 @@ func NewMsgApi(sdk conf.Sdk, logger *logrus.Entry) MsgApi {
 	return defaultMsgApi{
 		endpoint: sdk.Endpoint,
 		logger:   logger.WithField("rpc", sdk.Name),
-		client: &http.Client{
-			Transport: &http.Transport{
-				MaxIdleConns:        30,
-				MaxIdleConnsPerHost: 30,
-				IdleConnTimeout:     5 * time.Second,
-			},
-			Timeout: 5 * time.Second,
-		},
+		client: resty.New().
+			SetTransport(&http.Transport{
+				MaxIdleConns:    10,
+				MaxConnsPerHost: 10,
+				IdleConnTimeout: 30 * time.Second,
+			}).
+			SetTimeout(5 * time.Second).
+			SetRetryCount(3).
+			SetRetryWaitTime(15 * time.Second).
+			SetRetryMaxWaitTime(5 * time.Second),
 	}
 }

@@ -1,13 +1,12 @@
 package rpc
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/conf"
+	"github.com/go-resty/resty/v2"
 	"github.com/sirupsen/logrus"
-	"io"
 	"net/http"
 	"time"
 )
@@ -44,7 +43,7 @@ type (
 	defaultUserApi struct {
 		endpoint string
 		logger   *logrus.Entry
-		client   *http.Client
+		client   *resty.Client
 	}
 )
 
@@ -55,23 +54,17 @@ func (d defaultUserApi) PostUserOnlineStatus(req PostUserOnlineReq) error {
 		return err
 	}
 	url := fmt.Sprintf("%s%s", d.endpoint, userApiOnlineStatusUrl)
-	bodyReader := bytes.NewReader(dataBytes)
-	res, e := d.client.Post(url, contentType, bodyReader)
-	if e != nil {
+	res, errRequest := d.client.R().
+		SetHeader("Content-Type", "application/json").
+		SetBody(dataBytes).
+		Post(url)
+	if errRequest != nil {
+		return errRequest
+	}
+	if res.StatusCode() != http.StatusOK {
+		e := errors.New(string(res.Body()))
 		d.logger.Error(e)
 		return e
-	}
-	if res.StatusCode != http.StatusOK {
-		body, errBody := io.ReadAll(res.Body)
-		if errBody == nil {
-			e = errors.New(string(body))
-			d.logger.Error(e)
-			return e
-		} else {
-			e = errors.New(fmt.Sprintf("StatusCode:%d", res.StatusCode))
-			d.logger.Error(e)
-			return e
-		}
 	} else {
 		return nil
 	}
@@ -79,37 +72,24 @@ func (d defaultUserApi) PostUserOnlineStatus(req PostUserOnlineReq) error {
 
 func (d defaultUserApi) GetUserIdByToken(req GetUserIdByTokenReq) (*GetUserIdByTokenRes, error) {
 	url := fmt.Sprintf("%s%s?token=%s&platform=%s", d.endpoint, userApiGetUserIdByTokenUrl, req.Token, req.Platform)
-	res, e := d.client.Get(url)
-	if e != nil {
+	res, errRequest := d.client.R().
+		SetHeader("Content-Type", "application/json").
+		Get(url)
+	if errRequest != nil {
+		return nil, errRequest
+	}
+	if res.StatusCode() != http.StatusOK {
+		e := errors.New(string(res.Body()))
 		d.logger.Error(e)
 		return nil, e
-	}
-	if res.StatusCode != http.StatusOK {
-		body, errBody := io.ReadAll(res.Body)
-		if errBody == nil {
-			e = errors.New(string(body))
-			d.logger.Error(e)
-			return nil, e
-		} else {
-			e = errors.New(fmt.Sprintf("StatusCode:%d", res.StatusCode))
-			d.logger.Error(e)
-			return nil, e
-		}
 	} else {
-		body, errBody := io.ReadAll(res.Body)
-		if errBody == nil {
-			tokenRes := &GetUserIdByTokenRes{}
-			e = json.Unmarshal(body, tokenRes)
-			if e != nil {
-				d.logger.Error(e)
-				return nil, e
-			} else {
-				return tokenRes, nil
-			}
-		} else {
-			e = errors.New("BodyReadError")
+		tokenRes := &GetUserIdByTokenRes{}
+		e := json.Unmarshal(res.Body(), tokenRes)
+		if e != nil {
 			d.logger.Error(e)
 			return nil, e
+		} else {
+			return tokenRes, nil
 		}
 	}
 }
@@ -118,13 +98,15 @@ func NewUserApi(sdk conf.Sdk, logger *logrus.Entry) UserApi {
 	return defaultUserApi{
 		endpoint: sdk.Endpoint,
 		logger:   logger.WithField("rpc", sdk.Name),
-		client: &http.Client{
-			Transport: &http.Transport{
-				MaxIdleConns:        30,
-				MaxIdleConnsPerHost: 30,
-				IdleConnTimeout:     5 * time.Second,
-			},
-			Timeout: 5 * time.Second,
-		},
+		client: resty.New().
+			SetTransport(&http.Transport{
+				MaxIdleConns:    10,
+				MaxConnsPerHost: 10,
+				IdleConnTimeout: 30 * time.Second,
+			}).
+			SetTimeout(5 * time.Second).
+			SetRetryCount(3).
+			SetRetryWaitTime(15 * time.Second).
+			SetRetryMaxWaitTime(5 * time.Second),
 	}
 }
