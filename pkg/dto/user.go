@@ -1,10 +1,12 @@
 package dto
 
 type PostUserOnlineReq struct {
-	NodeId int64 `json:"node_id" binding:"required"`
-	ConnId int64 `json:"conn_id" binding:"required"`
-	Online bool  `json:"online"`
-	UId    int64 `json:"u_id" binding:"required"`
+	NodeId    int64  `json:"node_id" binding:"required"`
+	ConnId    int64  `json:"conn_id" binding:"required"`
+	Online    bool   `json:"online"`
+	UId       int64  `json:"u_id" binding:"required"`
+	Platform  string `json:"platform" binding:"required"`
+	Timestamp int64  `json:"timestamp" binding:"timestamp"`
 }
 
 type GetUsersOnlineStatusReq struct {
@@ -12,9 +14,9 @@ type GetUsersOnlineStatusReq struct {
 }
 
 type UserOnlineStatus struct {
-	UId            int64 `json:"u_id"`
-	Online         bool  `json:"online"`
-	LastOnlineTime int64 `json:"last_online_time"`
+	UId            int64  `json:"u_id"`
+	LastOnlineTime int64  `json:"last_online_time"`
+	Platform       string `json:"platform"`
 }
 
 type GetUsersOnlineStatusRes struct {

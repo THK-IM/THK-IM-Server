@@ -20,8 +20,11 @@ const (
 
 type (
 	PostUserOnlineReq struct {
-		UserId   int64 `json:"user_id"`
-		IsOnline bool  `json:"is_online"`
+		UserId    int64  `json:"user_id"`
+		IsOnline  bool   `json:"is_online"`
+		Timestamp int64  `json:"timestamp"`
+		ConnId    int64  `json:"conn_id"`
+		Platform  string `json:"platform"`
 	}
 
 	GetUserIdByTokenReq struct {

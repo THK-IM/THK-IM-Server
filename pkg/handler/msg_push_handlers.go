@@ -164,10 +164,12 @@ func sendUserOnlineStatus(ctx *app.Context, client websocket2.Client, online boo
 	now := time.Now().UnixMilli()
 	client.SetLastOnlineTime(now)
 	req := dto.PostUserOnlineReq{
-		NodeId: ctx.NodeId(),
-		ConnId: client.Info().Id,
-		Online: online,
-		UId:    client.Info().UId,
+		NodeId:    ctx.NodeId(),
+		ConnId:    client.Info().Id,
+		Online:    online,
+		UId:       client.Info().UId,
+		Platform:  client.Info().Platform,
+		Timestamp: time.Now().UnixMilli(),
 	}
 	if err := ctx.RpcMsgApi().PostUserOnlineStatus(req); err != nil {
 		ctx.Logger().Errorf("sendUserOnlineStatus, err: %v", err)

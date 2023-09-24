@@ -5,21 +5,20 @@ import (
 	"github.com/bwmarrin/snowflake"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
-	"time"
 )
 
 type (
 	UserOnlineStatus struct {
-		UserId     int64 `gorm:"user_id"`
-		IsOnline   int8  `gorm:"is_online"`
-		OnlineTime int64 `gorm:"online_time"`
+		UserId     int64  `gorm:"user_id"`
+		OnlineTime int64  `gorm:"online_time"`
+		ConnId     int64  `gorm:"conn_id"`
+		Platform   string `gorm:"platform"`
 	}
 
 	UserOnlineStatusModel interface {
 		GetUsersOnlineStatus(userIds []int64) ([]*UserOnlineStatus, error)
-		UpdateUserOnlineStatus(userId int64, isOnline int8) error
+		UpdateUserOnlineStatus(userId, onlineTime, connId int64, platform string) error
 		GetOnlineUserIds(userIds []int64, onlineTime int64) ([]int64, error)
-		GetOfflineUserIds(userIds []int64, onlineTime int64) ([]int64, error)
 	}
 
 	defaultUserOnlineStatusModel struct {
@@ -37,12 +36,37 @@ func (d defaultUserOnlineStatusModel) GetUsersOnlineStatus(userIds []int64) ([]*
 	return usersOnlineStatus, err
 }
 
-func (d defaultUserOnlineStatusModel) UpdateUserOnlineStatus(userId int64, isOnline int8) (err error) {
-	now := time.Now().UnixMilli()
-	sqlStr := "insert into user_online_status_00 " +
-		" (user_id, online_time, is_online) values (?, ?, ?)" +
-		" on duplicate key update online_time = ?, is_online = ?"
-	return d.db.Exec(sqlStr, userId, now, isOnline, now, isOnline).Error
+func (d defaultUserOnlineStatusModel) UpdateUserOnlineStatus(userId, onlineTime, connId int64, platform string) (err error) {
+	tx := d.db.Begin()
+	defer func() {
+		if err == nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
+		}
+	}()
+	// 通过user_id和platform找到连接
+	sqlStr := "select * from " + d.genUserOnlineStatusTable(userId) + " where user_id = ? and platform = ?"
+	onlineStatus := &UserOnlineStatus{}
+	err = tx.Raw(sqlStr, userId, connId, platform).Scan(onlineStatus).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return
+	}
+	if onlineStatus.UserId <= 0 {
+		// 插入
+		sqlStr = "insert into " + d.genUserOnlineStatusTable(userId) +
+			" (user_id, online_time, conn_id, platform) values (?, ?, ?, ?, ?)"
+		return tx.Exec(sqlStr, userId, onlineTime, connId, platform).Error
+	} else {
+		// 连接id不相等时更新
+		if connId != onlineStatus.ConnId {
+			sqlStr = "update " + d.genUserOnlineStatusTable(userId) +
+				" set online_time = ? where user_id = ? and conn_id = ?"
+			return tx.Exec(sqlStr, onlineTime, userId, connId, onlineTime).Error
+		} else {
+			return nil
+		}
+	}
 }
 
 func (d defaultUserOnlineStatusModel) GetOnlineUserIds(userIds []int64, onlineTime int64) ([]int64, error) {
@@ -53,16 +77,6 @@ func (d defaultUserOnlineStatusModel) GetOnlineUserIds(userIds []int64, onlineTi
 		return nil, tx.Error
 	}
 	return onlineUserIds, nil
-}
-
-func (d defaultUserOnlineStatusModel) GetOfflineUserIds(userIds []int64, onlineTime int64) ([]int64, error) {
-	sqlStr := "select user_id from user_online_status where user_id in ? and online_time < ?"
-	offlineUserIds := make([]int64, 0)
-	tx := d.db.Raw(sqlStr, userIds, onlineTime).Scan(&offlineUserIds)
-	if tx.Error != nil {
-		return nil, tx.Error
-	}
-	return offlineUserIds, nil
 }
 
 func (d defaultUserOnlineStatusModel) genUserOnlineStatusTable(userId int64) string {
