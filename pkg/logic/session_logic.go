@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/app"
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
 	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
@@ -20,6 +21,18 @@ func NewSessionLogic(appCtx *app.Context) SessionLogic {
 }
 
 func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessionRes, error) {
+	lockKey := fmt.Sprintf(sessionCreateLockKey, l.appCtx.Config().Name, req.UId, req.EntityId)
+	locker := l.appCtx.NewLocker(lockKey, 1000, 1000)
+	success, lockErr := locker.Lock()
+	if lockErr != nil || !success {
+		return nil, errorx.ErrServerBusy
+	}
+	defer func() {
+		if success, lockErr = locker.Release(); lockErr != nil {
+			l.appCtx.Logger().Errorf("release locker success: %t, error: %s", success, lockErr.Error())
+		}
+	}()
+
 	if req.Type == model.SingleSessionType {
 		if len(req.Members) > 0 {
 			return nil, errorx.ErrParamsError
@@ -84,7 +97,7 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 					entityIds = append(entityIds, req.EntityId)
 					role = append(role, model.SessionMember)
 				}
-				if err = l.appCtx.SessionUserModel().AddUser(session, entityIds, req.Members, role, maxCount, nil); err != nil {
+				if err = l.appCtx.SessionUserModel().AddUser(session, entityIds, req.Members, role, maxCount); err != nil {
 					return nil, err
 				}
 			}
@@ -109,33 +122,22 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 	return l.createNewSession(req)
 }
 
-func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (res *dto.CreateSessionRes, err error) {
-	tx := l.appCtx.Database().Begin()
-	defer func() {
-		if err != nil {
-			_ = tx.Rollback().Error
-		} else {
-			err = tx.Commit().Error
-		}
-	}()
-	var (
-		session *model.Session
-	)
-	session, err = l.appCtx.SessionModel().CreateEmptySession(req.Type, tx)
+func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (*dto.CreateSessionRes, error) {
+	session, err := l.appCtx.SessionModel().CreateEmptySession(req.Type)
 	if err != nil {
-		return
+		return nil, err
 	}
 	if req.Type == model.SingleSessionType {
 		entityIds := []int64{req.EntityId, req.UId}
 		uIds := []int64{req.UId, req.EntityId}
 		roles := []int{model.SessionOwner, model.SessionOwner}
-		if err = l.appCtx.SessionUserModel().AddUser(session, entityIds, uIds, roles, 2, tx); err != nil {
+		if err = l.appCtx.SessionUserModel().AddUser(session, entityIds, uIds, roles, 2); err != nil {
 			return nil, err
 		}
 	} else if req.Type == model.GroupSessionType || req.Type == model.SuperGroupSessionType {
 		if req.EntityId <= 0 {
 			err = errorx.ErrParamsError
-			return
+			return nil, err
 		}
 		entityIds := make([]int64, 0)
 		roles := make([]int, 0)
@@ -150,15 +152,15 @@ func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (res *dto.Crea
 		if req.Type == model.GroupSessionType {
 			maxMember = l.appCtx.Config().IM.MaxGroupMember
 		}
-		if err = l.appCtx.SessionUserModel().AddUser(session, entityIds, req.Members, roles, maxMember, tx); err != nil {
-			return
+		if err = l.appCtx.SessionUserModel().AddUser(session, entityIds, req.Members, roles, maxMember); err != nil {
+			return nil, err
 		}
 	} else {
 		err = errorx.ErrParamsError
-		return
+		return nil, err
 	}
 
-	res = &dto.CreateSessionRes{
+	res := &dto.CreateSessionRes{
 		SId:      session.Id,
 		Type:     req.Type,
 		EntityId: req.EntityId,
@@ -172,26 +174,28 @@ func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (res *dto.Crea
 		MTime:    session.UpdateTime,
 		Success:  true,
 	}
-	return
+	return res, nil
 }
 
-func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) (err error) {
-	tx := l.appCtx.Database().Begin()
+func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) error {
+	lockKey := fmt.Sprintf(sessionUpdateLockKey, l.appCtx.Config().Name, req.Id)
+	locker := l.appCtx.NewLocker(lockKey, 1000, 1000)
+	success, lockErr := locker.Lock()
+	if lockErr != nil || !success {
+		return errorx.ErrServerBusy
+	}
 	defer func() {
-		if err != nil {
-			_ = tx.Rollback().Error
-		} else {
-			err = tx.Commit().Error
+		if success, lockErr = locker.Release(); lockErr != nil {
+			l.appCtx.Logger().Errorf("release locker success: %t, error: %s", success, lockErr.Error())
 		}
 	}()
-	err = l.appCtx.SessionModel().UpdateSession(req.Id, req.Name, req.Remark, req.Mute, tx)
+	err := l.appCtx.SessionModel().UpdateSession(req.Id, req.Name, req.Remark, req.Mute)
 	if err != nil {
-		return
+		return err
 	}
 	sessionUsers, errSessionUsers := l.appCtx.SessionUserModel().FindAllSessionUsers(req.Id)
 	if errSessionUsers != nil {
-		err = errSessionUsers
-		return
+		return errSessionUsers
 	}
 	uIds := make([]int64, 0)
 	for _, su := range sessionUsers {
@@ -207,22 +211,24 @@ func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) (err error) {
 		sql := "mute | 1"
 		mute = &sql
 	}
-	err = l.appCtx.UserSessionModel().UpdateUserSession(uIds, req.Id, req.Name, req.Remark, mute, nil, nil, nil, tx)
-	return
+	return l.appCtx.UserSessionModel().UpdateUserSession(uIds, req.Id, req.Name, req.Remark, mute, nil, nil, nil)
 }
 
 func (l *SessionLogic) UpdateUserSession(req dto.UpdateUserSessionReq) (err error) {
-	tx := l.appCtx.Database().Begin()
+	lockKey := fmt.Sprintf(userSessionUpdateLockKey, l.appCtx.Config().Name, req.UId, req.SId)
+	locker := l.appCtx.NewLocker(lockKey, 1000, 1000)
+	success, lockErr := locker.Lock()
+	if lockErr != nil || !success {
+		return errorx.ErrServerBusy
+	}
 	defer func() {
-		if err != nil {
-			_ = tx.Rollback().Error
-		} else {
-			err = tx.Rollback().Error
+		if success, lockErr = locker.Release(); lockErr != nil {
+			l.appCtx.Logger().Errorf("release locker success: %t, error: %s", success, lockErr.Error())
 		}
 	}()
-	err = l.appCtx.UserSessionModel().UpdateUserSession([]int64{req.UId}, req.SId, nil, nil, nil, req.Top, req.Status, nil, tx)
+	err = l.appCtx.UserSessionModel().UpdateUserSession([]int64{req.UId}, req.SId, nil, nil, nil, req.Top, req.Status, nil)
 	if err == nil {
-		err = l.appCtx.SessionUserModel().UpdateUser(req.SId, []int64{req.UId}, nil, req.Status, nil, tx)
+		err = l.appCtx.SessionUserModel().UpdateUser(req.SId, []int64{req.UId}, nil, req.Status, nil)
 	} else {
 		l.appCtx.Logger().Error("UpdateUserSession, err", err)
 	}

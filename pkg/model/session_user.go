@@ -38,9 +38,9 @@ type (
 		FindSessionUserCount(sessionId int64) (int, error)
 		FindUIdsInSessionWithoutStatus(sessionId int64, status int, uIds []int64) []int64
 		FindUIdsInSessionContainStatus(sessionId int64, status int, uIds []int64) []int64
-		AddUser(session *Session, entityIds []int64, userIds []int64, role []int, maxCount int, tx *gorm.DB) (err error)
+		AddUser(session *Session, entityIds []int64, userIds []int64, role []int, maxCount int) (err error)
 		DelUser(session *Session, userIds []int64) (err error)
-		UpdateUser(sessionId int64, userIds []int64, role, status *int, mute *string, tx *gorm.DB) (err error)
+		UpdateUser(sessionId int64, userIds []int64, role, status *int, mute *string) (err error)
 	}
 
 	defaultSessionUserModel struct {
@@ -149,15 +149,19 @@ func (d defaultSessionUserModel) FindUIdsInSessionContainStatus(sessionId int64,
 	return uIds
 }
 
-func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, userIds []int64, role []int, maxCount int, tx *gorm.DB) (err error) {
-	db := tx
-	if db == nil {
-		db = d.db
-	}
+func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, userIds []int64, role []int, maxCount int) (err error) {
+	tx := d.db.Begin()
+	defer func() {
+		if err == nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
+		}
+	}()
 	count := 0
 	tableName := d.genSessionUserTableName(session.Id)
 	sqlStr := fmt.Sprintf("select count(0) from %s where session_id = ? and user_id not in ? and deleted = 0", tableName)
-	if err = db.Raw(sqlStr, session.Id, userIds).Scan(&count).Error; err != nil {
+	if err = tx.Raw(sqlStr, session.Id, userIds).Scan(&count).Error; err != nil {
 		return err
 	}
 
@@ -175,7 +179,7 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, us
 		userMute = 1
 	}
 	for index, id := range userIds {
-		if err = db.Exec(sql1, session.Id, id, role[index], session.Type, t, t, role[index], 0, t).Error; err != nil {
+		if err = tx.Exec(sql1, session.Id, id, role[index], session.Type, t, t, role[index], 0, t).Error; err != nil {
 			return err
 		}
 
@@ -183,7 +187,7 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, us
 			" (session_id, user_id, type, entity_id, role, name, remark, mute, create_time, update_time) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) " +
 			"on duplicate key update top = ?, role = ?, name = ?, remark = ?, mute = ?, deleted = ?, update_time = ? "
 
-		if err = db.Exec(sql2, session.Id, id, session.Type, entityIds[index], role[index], session.Name, session.Remark, userMute, t, t,
+		if err = tx.Exec(sql2, session.Id, id, session.Type, entityIds[index], role[index], session.Name, session.Remark, userMute, t, t,
 			0, role[index], session.Name, session.Remark, userMute, 0, t).Error; err != nil {
 			return err
 		}
@@ -217,7 +221,7 @@ func (d defaultSessionUserModel) DelUser(session *Session, userIds []int64) (err
 	return nil
 }
 
-func (d defaultSessionUserModel) UpdateUser(sessionId int64, userIds []int64, role, status *int, mute *string, tx *gorm.DB) (err error) {
+func (d defaultSessionUserModel) UpdateUser(sessionId int64, userIds []int64, role, status *int, mute *string) (err error) {
 	if role == nil && status == nil && mute == nil {
 		return nil
 	}
@@ -234,11 +238,7 @@ func (d defaultSessionUserModel) UpdateUser(sessionId int64, userIds []int64, ro
 		sqlBuffer.WriteString(fmt.Sprintf(" mute = %s, ", *mute))
 	}
 	sqlBuffer.WriteString(fmt.Sprintf(" update_time = %d where session_id = ? and user_id in ? ", t))
-	db := tx
-	if db == nil {
-		db = d.db
-	}
-	return tx.Exec(sqlBuffer.String(), sessionId, userIds).Error
+	return d.db.Exec(sqlBuffer.String(), sessionId, userIds).Error
 }
 
 func (d defaultSessionUserModel) genUserSessionTableName(userId int64) string {

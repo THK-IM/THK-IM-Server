@@ -1,6 +1,7 @@
 package logic
 
 import (
+	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/dto"
 	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/THK-IM/THK-IM-Server/pkg/model"
@@ -20,7 +21,18 @@ func (l *SessionLogic) GetUser(req dto.GetSessionUserReq) (*dto.GetSessionUserRe
 }
 
 func (l *SessionLogic) AddUser(sid int64, req dto.SessionAddUserReq) error {
-	session, err := l.appCtx.SessionModel().FindSession(sid, nil)
+	lockKey := fmt.Sprintf(sessionUpdateLockKey, l.appCtx.Config().Name, sid)
+	locker := l.appCtx.NewLocker(lockKey, 1000, 1000)
+	success, lockErr := locker.Lock()
+	if lockErr != nil || !success {
+		return errorx.ErrServerBusy
+	}
+	defer func() {
+		if success, lockErr = locker.Release(); lockErr != nil {
+			l.appCtx.Logger().Errorf("release locker success: %t, error: %s", success, lockErr.Error())
+		}
+	}()
+	session, err := l.appCtx.SessionModel().FindSession(sid)
 	if err != nil {
 		return err
 	}
@@ -38,33 +50,39 @@ func (l *SessionLogic) AddUser(sid int64, req dto.SessionAddUserReq) error {
 		roles = append(roles, req.Role)
 		entityIds = append(entityIds, req.EntityId)
 	}
-	tx := l.appCtx.Database().Begin()
-	err = l.appCtx.SessionUserModel().AddUser(session, entityIds, req.UIds, roles, maxCount, tx)
-	if err != nil {
-		_ = tx.Rollback()
-	} else {
-		err = tx.Commit().Error
-	}
+	err = l.appCtx.SessionUserModel().AddUser(session, entityIds, req.UIds, roles, maxCount)
 	return err
 }
 
 func (l *SessionLogic) DelUser(sid int64, req dto.SessionDelUserReq) error {
-	session, err := l.appCtx.SessionModel().FindSession(sid, nil)
+	lockKey := fmt.Sprintf(sessionUpdateLockKey, l.appCtx.Config().Name, sid)
+	locker := l.appCtx.NewLocker(lockKey, 1000, 1000)
+	success, lockErr := locker.Lock()
+	if lockErr != nil || !success {
+		return errorx.ErrServerBusy
+	}
+	defer func() {
+		if success, lockErr = locker.Release(); lockErr != nil {
+			l.appCtx.Logger().Errorf("release locker success: %t, error: %s", success, lockErr.Error())
+		}
+	}()
+	session, err := l.appCtx.SessionModel().FindSession(sid)
 	if err != nil {
 		return err
 	}
-
 	return l.appCtx.SessionUserModel().DelUser(session, req.UIds)
 }
 
 func (l *SessionLogic) UpdateSessionUser(req dto.SessionUserUpdateReq) (err error) {
-	db := l.appCtx.Database()
-	tx := db.Begin()
+	lockKey := fmt.Sprintf(sessionUpdateLockKey, l.appCtx.Config().Name, req.SId)
+	locker := l.appCtx.NewLocker(lockKey, 1000, 1000)
+	success, lockErr := locker.Lock()
+	if lockErr != nil || !success {
+		return errorx.ErrServerBusy
+	}
 	defer func() {
-		if err != nil {
-			_ = tx.Rollback().Error
-		} else {
-			err = tx.Commit().Error
+		if success, lockErr = locker.Release(); lockErr != nil {
+			l.appCtx.Logger().Errorf("release locker success: %t, error: %s", success, lockErr.Error())
 		}
 	}()
 	var mute *string
@@ -79,7 +97,7 @@ func (l *SessionLogic) UpdateSessionUser(req dto.SessionUserUpdateReq) (err erro
 	} else {
 		return errorx.ErrParamsError
 	}
-	err = l.appCtx.SessionUserModel().UpdateUser(req.SId, req.UIds, req.Role, nil, mute, tx)
+	err = l.appCtx.SessionUserModel().UpdateUser(req.SId, req.UIds, req.Role, nil, mute)
 	return err
 }
 

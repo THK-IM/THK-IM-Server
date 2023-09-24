@@ -6,6 +6,7 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/conf/loader"
 	"github.com/THK-IM/THK-IM-Server/pkg/model"
 	"github.com/THK-IM/THK-IM-Server/pkg/rpc"
+	"github.com/THK-IM/THK-IM-Server/pkg/service/locker"
 	"github.com/THK-IM/THK-IM-Server/pkg/service/metric"
 	"github.com/THK-IM/THK-IM-Server/pkg/service/mq"
 	"github.com/THK-IM/THK-IM-Server/pkg/service/object"
@@ -27,6 +28,7 @@ type Context struct {
 	collector       *metric.Collector
 	snowflakeNode   *snowflake.Node
 	httpEngine      *gin.Engine
+	lockerFactory   locker.Factory
 	objectStorage   object.Storage
 	websocketServer websocket.Server
 	rpcMap          map[string]interface{}
@@ -149,6 +151,10 @@ func (c *Context) Logger() *logrus.Entry {
 	return c.logger
 }
 
+func (c *Context) NewLocker(key string, waitMs int, timeoutMs int) locker.Locker {
+	return c.lockerFactory.NewLocker(key, waitMs, timeoutMs)
+}
+
 func NewAppContext(config *conf.Config, httpEngine *gin.Engine) *Context {
 	logger := loader.LoadLogg(config.Name, config.Logg)
 	// gin.DefaultWriter = logger.WriterLevel(logrus.InfoLevel)
@@ -185,6 +191,10 @@ func NewAppContext(config *conf.Config, httpEngine *gin.Engine) *Context {
 	}
 	if config.Sdks != nil {
 		ctx.rpcMap = loader.LoadSdks(config.Sdks, logger)
+	}
+
+	if redisCache != nil {
+		ctx.lockerFactory = locker.NewRedisLockerFactory(redisCache, logger)
 	}
 
 	if config.ObjectStorage != nil {

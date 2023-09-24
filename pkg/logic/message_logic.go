@@ -97,7 +97,7 @@ func (l *MessageLogic) DelSessionMessage(req *dto.DelSessionMessageReq) error {
 }
 
 func (l *MessageLogic) SendMessage(req dto.SendMessageReq) (*dto.SendMessageRes, error) {
-	session, errSession := l.appCtx.SessionModel().FindSession(req.SId, nil)
+	session, errSession := l.appCtx.SessionModel().FindSession(req.SId)
 	if errSession != nil || session.Id <= 0 {
 		l.appCtx.Logger().Error(errSession)
 		return nil, errorx.ErrSessionInvalid

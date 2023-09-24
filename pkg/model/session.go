@@ -27,9 +27,9 @@ type (
 	}
 
 	SessionModel interface {
-		UpdateSession(sessionId int64, name, remark *string, mute *int, tx *gorm.DB) error
-		FindSession(sessionId int64, tx *gorm.DB) (*Session, error)
-		CreateEmptySession(sessionType int, tx *gorm.DB) (*Session, error)
+		UpdateSession(sessionId int64, name, remark *string, mute *int) error
+		FindSession(sessionId int64) (*Session, error)
+		CreateEmptySession(sessionType int) (*Session, error)
 	}
 
 	defaultSessionModel struct {
@@ -40,7 +40,7 @@ type (
 	}
 )
 
-func (d defaultSessionModel) UpdateSession(sessionId int64, name, remark *string, mute *int, tx *gorm.DB) error {
+func (d defaultSessionModel) UpdateSession(sessionId int64, name, remark *string, mute *int) error {
 	if name == nil && remark == nil && mute == nil {
 		return nil
 	}
@@ -55,25 +55,17 @@ func (d defaultSessionModel) UpdateSession(sessionId int64, name, remark *string
 		updateMap["mute"] = *mute
 	}
 	updateMap["update_time"] = time.Now().UnixMilli()
-	db := tx
-	if db == nil {
-		db = d.db
-	}
-	return db.Table(d.genSessionTableName(sessionId)).Where("id = ?", sessionId).Updates(updateMap).Error
+	return d.db.Table(d.genSessionTableName(sessionId)).Where("id = ?", sessionId).Updates(updateMap).Error
 }
 
-func (d defaultSessionModel) FindSession(sessionId int64, tx *gorm.DB) (*Session, error) {
+func (d defaultSessionModel) FindSession(sessionId int64) (*Session, error) {
 	sqlStr := "select * from " + d.genSessionTableName(sessionId) + " where id = ? and deleted = 0"
 	session := &Session{}
-	db := tx
-	if tx == nil {
-		db = d.db
-	}
-	err := db.Raw(sqlStr, sessionId).Scan(session).Error
+	err := d.db.Raw(sqlStr, sessionId).Scan(session).Error
 	return session, err
 }
 
-func (d defaultSessionModel) CreateEmptySession(sessionType int, tx *gorm.DB) (*Session, error) {
+func (d defaultSessionModel) CreateEmptySession(sessionType int) (*Session, error) {
 	sessionId := int64(d.snowflakeNode.Generate())
 	currTime := time.Now().UnixMilli()
 	session := Session{
@@ -82,13 +74,7 @@ func (d defaultSessionModel) CreateEmptySession(sessionType int, tx *gorm.DB) (*
 		CreateTime: currTime,
 		UpdateTime: currTime,
 	}
-	var err error
-	if tx != nil {
-		tx = tx.Table(d.genSessionTableName(sessionId)).Create(&session)
-		err = tx.Error
-	} else {
-		err = d.db.Table(d.genSessionTableName(sessionId)).Create(&session).Error
-	}
+	err := d.db.Table(d.genSessionTableName(sessionId)).Create(&session).Error
 	if err != nil {
 		return nil, err
 	}

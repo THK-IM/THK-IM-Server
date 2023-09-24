@@ -16,5 +16,6 @@ var (
 	ErrUserReject             = NewErrorX(4001003, "user reject your message")
 
 	ErrServerUnknown         = NewErrorX(5000000, "Server unknown err")
+	ErrServerBusy            = NewErrorX(5000001, "Server busy")
 	ErrMessageDeliveryFailed = NewErrorX(5004001, "Message delivery failed")
 )

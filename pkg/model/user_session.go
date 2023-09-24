@@ -40,7 +40,7 @@ type (
 	UserSessionModel interface {
 		RecoverUserSession(userId, sessionId, time int64) error
 		FindUserSessionByEntityId(userId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error)
-		UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int, tx *gorm.DB) error
+		UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int) error
 		FindEntityIdsInUserSession(userId, sessionId int64) []int64
 		GetUserSessions(userId, mTime int64, offset, count int) ([]*UserSession, error)
 		GetUserSession(userId, sessionId int64) (*UserSession, error)
@@ -76,7 +76,7 @@ func (d defaultUserSessionModel) FindUserSessionByEntityId(userId, entityId int6
 	return userSession, err
 }
 
-func (d defaultUserSessionModel) UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int, tx *gorm.DB) error {
+func (d defaultUserSessionModel) UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int) (err error) {
 	// 分表uid数组
 	sharedUIds := make(map[int64][]int64, 0)
 	for _, uId := range userIds {
@@ -86,6 +86,16 @@ func (d defaultUserSessionModel) UpdateUserSession(userIds []int64, sessionId in
 		}
 		sharedUIds[share] = append(sharedUIds[share], uId)
 	}
+
+	tx := d.db.Begin()
+	defer func() {
+		if err == nil {
+			tx.Commit()
+		} else {
+			tx.Rollback()
+		}
+	}()
+
 	for k, v := range sharedUIds {
 		if sessionName == nil && sessionRemark == nil && top == nil && status == nil && mute == nil && role == nil {
 			continue
@@ -112,11 +122,7 @@ func (d defaultUserSessionModel) UpdateUserSession(userIds []int64, sessionId in
 		}
 		sqlBuffer.WriteString(fmt.Sprintf("update_time = %d ", time.Now().UnixMilli()))
 		sqlBuffer.WriteString("where session_id = ? and user_id in ? ")
-		db := tx
-		if db == nil {
-			db = d.db
-		}
-		err := tx.Exec(sqlBuffer.String(), sessionId, v).Error
+		err = tx.Exec(sqlBuffer.String(), sessionId, v).Error
 		if err != nil {
 			return err
 		}
