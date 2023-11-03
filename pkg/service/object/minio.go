@@ -41,7 +41,7 @@ func (m MinioStorage) GetUploadParams(key string) (string, string, map[string]st
 	for k, v := range formData {
 		params[k] = v
 	}
-	params["success_action_status"] = "200"
+	// params["success_action_status"] = "200"
 	return uploadUrl.String(), "POST", params, nil
 }
 

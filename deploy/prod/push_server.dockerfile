@@ -6,7 +6,7 @@ RUN mkdir -p /opt/${PROJECT_NAME}
 WORKDIR /opt/${PROJECT_NAME}
 COPY go.mod ./
 RUN go mod download
-ADD . .
+ADD .. .
 RUN go build -o ${PROJECT_NAME} main.go
 
 FROM golang:1.20.0-alpine as Runner
