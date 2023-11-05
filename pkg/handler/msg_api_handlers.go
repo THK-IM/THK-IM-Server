@@ -35,9 +35,10 @@ func RegisterApiHandlers(ctx *app.Context) {
 	userSessionGroup := httpEngine.Group("/user_session")
 	userSessionGroup.Use(authMiddleware)
 	{
-		userSessionGroup.GET("/:uid/:sid", getUserSession(ctx)) // 用户获取自己的session
-		userSessionGroup.GET("/latest", getUserSessions(ctx))   // 用户获取自己的session列表
-		userSessionGroup.PUT("", updateUserSession(ctx))        // 用户修改自己的session
+		userSessionGroup.GET("/:uid/:sid", getUserSession(ctx))       // 用户获取自己的session
+		userSessionGroup.GET("/latest", getUserSessions(ctx))         // 用户获取自己的session列表
+		userSessionGroup.PUT("", updateUserSession(ctx))              // 用户修改自己的session
+		userSessionGroup.DELETE("/:uid/:sid", deleteUserSession(ctx)) // 用户删除自己的session
 	}
 
 	messageGroup := httpEngine.Group("/message")

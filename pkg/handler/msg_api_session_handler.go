@@ -269,3 +269,42 @@ func deleteSessionMessage(appCtx *app.Context) gin.HandlerFunc {
 		}
 	}
 }
+
+func deleteUserSession(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewSessionLogic(appCtx)
+	return func(ctx *gin.Context) {
+		var (
+			uid = ctx.Param("uid")
+			sid = ctx.Param("sid")
+		)
+
+		iUid, e1 := strconv.ParseInt(uid, 10, 64)
+		if e1 != nil {
+			appCtx.Logger().Warn(e1)
+			dto.ResponseBadRequest(ctx)
+			return
+		}
+
+		iSid, e2 := strconv.ParseInt(sid, 10, 64)
+		if e2 != nil {
+			appCtx.Logger().Warn(e2)
+			dto.ResponseBadRequest(ctx)
+			return
+		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != iUid {
+			appCtx.Logger().Warn("param uid error")
+			dto.ResponseForbidden(ctx)
+			return
+		}
+		req := dto.SessionDelUserReq{
+			UIds: []int64{iUid},
+		}
+		if err := l.DelUser(iSid, req); err != nil {
+			appCtx.Logger().Warn(e2)
+			dto.ResponseInternalServerError(ctx, err)
+		} else {
+			dto.ResponseSuccess(ctx, nil)
+		}
+	}
+}
