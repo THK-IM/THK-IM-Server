@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/THK-IM/THK-IM-Server/pkg/conf"
+	"github.com/THK-IM/THK-IM-Server/pkg/event"
 	"github.com/bwmarrin/snowflake"
 	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
@@ -21,7 +22,8 @@ const (
 	PlatformKey = "platform"
 )
 
-type OnClientChange func(client Client)
+type OnClientConnected func(client Client)
+type OnClientClosed func(client Client)
 type OnClientMsgReceived func(msg string, client Client)
 type UidGetter func(token string, platform string) (uid int64, err error)
 
@@ -30,12 +32,12 @@ type Server interface {
 	Clients() map[int64][]Client
 	ClientCount() int64
 	SetUidGetter(g UidGetter)
-	SetOnClientConnected(f OnClientChange)
-	SetOnClientClosed(f OnClientChange)
+	SetOnClientConnected(f OnClientConnected)
+	SetOnClientClosed(f OnClientClosed)
 	SetOnClientMsgReceived(r OnClientMsgReceived)
 	AddClient(uid int64, client Client) (err error)
 	RemoveClient(uid int64, reason string, client Client) error
-	OnUserConnected(uid int64, connId int64, platform string) error
+	OnUserOnLineEvent(body event.OnlineBody) error
 	SendMessage(uid int64, msg string) (err error)
 	SendMessageToUsers(uIds []int64, msg string) (err error)
 }
@@ -51,8 +53,8 @@ type WsServer struct {
 	snowflakeNode       *snowflake.Node
 	GetUidByToken       UidGetter
 	userClients         map[int64][]Client
-	OnClientConnected   OnClientChange
-	OnClientClosed      OnClientChange
+	OnClientConnected   OnClientConnected
+	OnClientClosed      OnClientClosed
 }
 
 func NewServer(conf *conf.WebSocket, logger *logrus.Entry, g *gin.Engine, snowflakeNode *snowflake.Node, mode string) *WsServer {
@@ -75,10 +77,10 @@ func (server *WsServer) SetUidGetter(g UidGetter) {
 	server.GetUidByToken = g
 }
 
-func (server *WsServer) SetOnClientConnected(f OnClientChange) {
+func (server *WsServer) SetOnClientConnected(f OnClientConnected) {
 	server.OnClientConnected = f
 }
-func (server *WsServer) SetOnClientClosed(f OnClientChange) {
+func (server *WsServer) SetOnClientClosed(f OnClientClosed) {
 	server.OnClientClosed = f
 }
 
@@ -129,21 +131,25 @@ func (server *WsServer) RemoveClient(uid int64, reason string, client Client) (e
 	return err
 }
 
-func (server *WsServer) OnUserConnected(uid int64, connId int64, platform string) error {
+func (server *WsServer) OnUserOnLineEvent(body event.OnlineBody) error {
 	server.mutex.RLock()
-	clients, ok := server.userClients[uid]
+	clients, ok := server.userClients[body.UserId]
 	server.mutex.RUnlock()
 	if ok {
 		for _, client := range clients {
-			if client.Info().Id != connId {
+			if client.Info().Id != body.ConnId {
 				if server.conf.MultiPlatform == 0 {
-					if err := server.RemoveClient(uid, "connect at other device", client); err != nil {
-						server.logger.Error("OnUserConnected RemoveClient err: ", err)
+					if client.Info().FirstOnLineTime < body.OnLineTime {
+						if err := server.RemoveClient(body.UserId, "connect at other device", client); err != nil {
+							server.logger.Error("OnUserOnLineEvent RemoveClient err: ", err)
+						}
 					}
 				} else if server.conf.MultiPlatform == 1 {
-					if client.Info().Platform == platform {
-						if err := server.RemoveClient(uid, "connect at other device", client); err != nil {
-							server.logger.Error("OnUserConnected RemoveClient err: ", err)
+					if client.Info().Platform == body.Platform {
+						if client.Info().FirstOnLineTime < body.OnLineTime {
+							if err := server.RemoveClient(body.UserId, "connect at other device", client); err != nil {
+								server.logger.Error("OnUserOnLineEvent RemoveClient err: ", err)
+							}
 						}
 					}
 				}

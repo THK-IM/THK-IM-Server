@@ -9,15 +9,15 @@ import (
 )
 
 type ClientInfo struct {
-	Id             int64  // 唯一id
-	UId            int64  // 用户id
-	LastOnlineTime int64  // 最近心跳时间 毫秒
-	Platform       string // 客户端平台 "android/ios/web/windows"
+	Id              int64  // 唯一id
+	UId             int64  // 用户id
+	FirstOnLineTime int64  // 首次上线时间 毫秒
+	LastOnlineTime  int64  // 最近心跳时间 毫秒
+	Platform        string // 客户端平台 "android/ios/web/windows"
 }
 
 type Client interface {
 	Info() *ClientInfo
-	LastOnlineTime() int64
 	SetLastOnlineTime(mill int64)
 	AcceptMessage()
 	WriteMessage(msg string) error
@@ -43,6 +43,12 @@ func (w *WsClient) SetLastOnlineTime(mill int64) {
 	w.locker.Lock()
 	defer w.locker.Unlock()
 	w.info.LastOnlineTime = mill
+}
+
+func (w *WsClient) FirstOnlineTime() int64 {
+	w.locker.Lock()
+	defer w.locker.Unlock()
+	return w.info.FirstOnLineTime
 }
 
 func (w *WsClient) WriteMessage(msg string) error {
@@ -108,10 +114,11 @@ func (w *WsClient) Info() *ClientInfo {
 func NewClient(ws *websocket.Conn, id, uId int64, platform string, server *WsServer) Client {
 	onLineTime := time.Now().UnixMilli()
 	info := ClientInfo{
-		Id:             id,
-		UId:            uId,
-		LastOnlineTime: onLineTime,
-		Platform:       platform,
+		Id:              id,
+		UId:             uId,
+		FirstOnLineTime: onLineTime,
+		LastOnlineTime:  onLineTime,
+		Platform:        platform,
 	}
 	return &WsClient{
 		server:   server,

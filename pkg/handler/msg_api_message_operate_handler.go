@@ -107,3 +107,41 @@ func reeditUserMessage(appCtx *app.Context) gin.HandlerFunc {
 		}
 	}
 }
+
+func forwardUserMessage(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewMessageLogic(appCtx)
+	return func(ctx *gin.Context) {
+		var req dto.ForwardUserMessageReq
+		if err := ctx.BindJSON(&req); err != nil {
+			appCtx.Logger().Warn(err.Error())
+			dto.ResponseBadRequest(ctx)
+			return
+		}
+		requestUid := ctx.GetInt64(uidKey)
+		if requestUid > 0 && requestUid != req.FUid {
+			appCtx.Logger().Warn("param uid error")
+			dto.ResponseForbidden(ctx)
+			return
+		}
+
+		// 鉴权
+		su, errSu := appCtx.SessionUserModel().FindSessionUser(req.ForwardSId, req.FUid)
+		if errSu != nil {
+			appCtx.Logger().Warn("session user err: ", errSu)
+			dto.ResponseForbidden(ctx)
+			return
+		}
+		if su.UserId <= 0 {
+			appCtx.Logger().Warn("session user not existed")
+			dto.ResponseForbidden(ctx)
+			return
+		}
+
+		if resp, err := l.ForwardUserMessages(req); err != nil {
+			appCtx.Logger().Warn(err.Error())
+			dto.ResponseInternalServerError(ctx, err)
+		} else {
+			dto.ResponseSuccess(ctx, resp)
+		}
+	}
+}

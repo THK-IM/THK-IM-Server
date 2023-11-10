@@ -6,11 +6,10 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/THK-IM/THK-IM-Server/pkg/logic"
 	"github.com/gin-gonic/gin"
-	"strconv"
 )
 
-func getUploadParams(appCtx *app.Context) gin.HandlerFunc {
-	l := logic.NewObjectLogic(appCtx)
+func getObjectUploadParams(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewSessionObjectLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.GetUploadParamsReq
 		if err := ctx.BindQuery(&req); err != nil {
@@ -27,6 +26,7 @@ func getUploadParams(appCtx *app.Context) gin.HandlerFunc {
 
 		res, err := l.GetUploadParams(req)
 		if err != nil {
+			appCtx.Logger().Warn(err.Error())
 			dto.ResponseInternalServerError(ctx, err)
 		} else {
 			dto.ResponseSuccess(ctx, res)
@@ -34,21 +34,18 @@ func getUploadParams(appCtx *app.Context) gin.HandlerFunc {
 	}
 }
 
-func getObject(appCtx *app.Context) gin.HandlerFunc {
-	l := logic.NewObjectLogic(appCtx)
+func getObjectDownloadUrl(appCtx *app.Context) gin.HandlerFunc {
+	l := logic.NewSessionObjectLogic(appCtx)
 	return func(ctx *gin.Context) {
-		id, errParams := strconv.Atoi(ctx.Param("id"))
-		if errParams != nil {
-			appCtx.Logger().Warn(errParams.Error())
+		var req dto.GetDownloadUrlReq
+		if err := ctx.BindQuery(&req); err != nil {
+			appCtx.Logger().Warn(err.Error())
 			dto.ResponseBadRequest(ctx)
 			return
 		}
 
 		requestUid := ctx.GetInt64(uidKey)
-		req := dto.GetDownloadUrlReq{
-			UId: requestUid,
-			Id:  int64(id),
-		}
+		req.UId = requestUid
 
 		path, err := l.GetObjectByKey(req)
 		if err != nil {
@@ -57,6 +54,7 @@ func getObject(appCtx *app.Context) gin.HandlerFunc {
 			if path != nil {
 				dto.Redirect302(ctx, *path)
 			} else {
+				appCtx.Logger().Warn(err.Error())
 				dto.ResponseInternalServerError(ctx, errorx.ErrServerUnknown)
 			}
 		}

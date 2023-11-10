@@ -82,14 +82,8 @@ func (l *MessageLogic) ReeditUserMessage(req dto.ReeditUserMessageReq) error {
 		if sessionMessage.SessionId == 0 || sessionMessage.Deleted == 1 {
 			return errorx.ErrSessionMessageInvalid
 		}
-		if sessionMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不能发送撤回
+		if sessionMessage.MsgType < 0 { // 小于0的类型消息为状态操作消息，不能重新编辑
 			return errorx.ErrMessageTypeNotSupport
-		}
-		// 更新session的消息内容
-		_, err = l.appCtx.SessionMessageModel().DeleteSessionMessage(
-			sessionMessage.SessionId, sessionMessage.MsgId, sessionMessage.FromUserId)
-		if err != nil {
-			return err
 		}
 		sendMessageReq := dto.SendMessageReq{
 			CId:    l.genClientId(),
@@ -107,6 +101,16 @@ func (l *MessageLogic) ReeditUserMessage(req dto.ReeditUserMessageReq) error {
 		l.appCtx.Logger().Errorf("ReeditUserMessage err:%d, %d, %d, %v", req.UId, req.SId, req.MsgId, err)
 	}
 	return nil
+}
+
+func (l *MessageLogic) ForwardUserMessages(req dto.ForwardUserMessageReq) (*dto.SendMessageRes, error) {
+	if len(req.ForwardObjectIds) > 0 {
+		err := l.appCtx.SessionObjectModel().AddSession(req.SId, req.ForwardObjectIds, req.FUid, req.CId, req.ForwardSId)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return l.SendMessage(req.SendMessageReq)
 }
 
 func (l *MessageLogic) genClientId() int64 {

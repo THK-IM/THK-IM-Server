@@ -55,7 +55,7 @@ func (d defaultUserApi) PostUserOnlineStatus(req PostUserOnlineReq) error {
 	}
 	url := fmt.Sprintf("%s%s", d.endpoint, userApiOnlineStatusUrl)
 	res, errRequest := d.client.R().
-		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Type", contentType).
 		SetBody(dataBytes).
 		Post(url)
 	if errRequest != nil {
@@ -73,7 +73,7 @@ func (d defaultUserApi) PostUserOnlineStatus(req PostUserOnlineReq) error {
 func (d defaultUserApi) GetUserIdByToken(req GetUserIdByTokenReq) (*GetUserIdByTokenRes, error) {
 	url := fmt.Sprintf("%s%s?token=%s&platform=%s", d.endpoint, userApiGetUserIdByTokenUrl, req.Token, req.Platform)
 	res, errRequest := d.client.R().
-		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Type", contentType).
 		Get(url)
 	if errRequest != nil {
 		return nil, errRequest

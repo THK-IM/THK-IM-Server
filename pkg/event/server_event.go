@@ -19,21 +19,23 @@ const (
 
 type (
 	OnlineBody struct {
-		NodeId   int64  `json:"node_id"`
-		Online   bool   `json:"online"`
-		UserId   int64  `json:"user_id"`
-		ConnId   int64  `json:"conn_id"`
-		Platform string `json:"platform"`
+		NodeId     int64  `json:"node_id"`
+		Online     bool   `json:"online"`
+		UserId     int64  `json:"user_id"`
+		ConnId     int64  `json:"conn_id"`
+		Platform   string `json:"platform"`
+		OnLineTime int64  `json:"on_line_time"`
 	}
 )
 
-func BuildUserOnlineEvent(nodeId int64, online bool, uid, connId int64, platform string) (map[string]interface{}, error) {
+func BuildUserOnlineEvent(nodeId int64, online bool, uid, connId, onLineTime int64, platform string) (map[string]interface{}, error) {
 	onlineBody := &OnlineBody{
-		NodeId:   nodeId,
-		Online:   online,
-		UserId:   uid,
-		ConnId:   connId,
-		Platform: platform,
+		NodeId:     nodeId,
+		Online:     online,
+		UserId:     uid,
+		ConnId:     connId,
+		Platform:   platform,
+		OnLineTime: onLineTime,
 	}
 	b, err := json.Marshal(onlineBody)
 	if err != nil {

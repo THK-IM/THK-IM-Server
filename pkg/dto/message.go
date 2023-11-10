@@ -55,6 +55,7 @@ type SendMessageReq struct {
 	RMsgId    *int64  `json:"r_msg_id,omitempty"`
 	AtUsers   *string `json:"at_users,omitempty"`
 	Receivers []int64 `json:"receivers,omitempty"`
+	ObjectIds []int64 `json:"object_ids,omitempty"`
 }
 
 type SendMessageRes struct {

@@ -30,13 +30,19 @@ func RegisterApiHandlers(ctx *app.Context) {
 		sessionGroup.PUT("/:id/user", updateSessionUser(ctx))          // 会话成员修改
 		sessionGroup.GET("/:id/message", getSessionMessages(ctx))      // 获取session下的消息列表
 		sessionGroup.DELETE("/:id/message", deleteSessionMessage(ctx)) // 删除session下的消息列表
+
+		// 如果提供内置对象存储服务，则开放接口
+		if ctx.ObjectStorage() != nil {
+			sessionGroup.GET("/object/upload_params", getObjectUploadParams(ctx)) // 获取对象上传参数
+			sessionGroup.GET("/object/download_url", getObjectDownloadUrl(ctx))   // 获取对象,鉴权后重定向到签名后的minio地址
+		}
 	}
 
 	userSessionGroup := httpEngine.Group("/user_session")
 	userSessionGroup.Use(authMiddleware)
 	{
+		userSessionGroup.GET("/latest", getUserSessions(ctx))         // 用户获取自己最近的session列表
 		userSessionGroup.GET("/:uid/:sid", getUserSession(ctx))       // 用户获取自己的session
-		userSessionGroup.GET("/latest", getUserSessions(ctx))         // 用户获取自己的session列表
 		userSessionGroup.PUT("", updateUserSession(ctx))              // 用户修改自己的session
 		userSessionGroup.DELETE("/:uid/:sid", deleteUserSession(ctx)) // 用户删除自己的session
 	}
@@ -44,23 +50,14 @@ func RegisterApiHandlers(ctx *app.Context) {
 	messageGroup := httpEngine.Group("/message")
 	messageGroup.Use(authMiddleware)
 	{
+		messageGroup.GET("/latest", getUserLatestMessages(ctx)) // 获取最近消息
 		messageGroup.POST("", sendMessage(ctx))                 // 发送消息
+		messageGroup.POST("/forward", forwardUserMessage(ctx))  // 转发用户消息
 		messageGroup.DELETE("", deleteUserMessage(ctx))         // 删除消息
 		messageGroup.POST("/ack", ackUserMessages(ctx))         // 用户消息设置ack(已接收) 不支持超级群
 		messageGroup.POST("/read", readUserMessage(ctx))        // 用户消息设置已读 不支持超级群
 		messageGroup.POST("/revoke", revokeUserMessage(ctx))    // 用户消息撤回
 		messageGroup.POST("/reedit", reeditUserMessage(ctx))    // 更新用户消息
-		messageGroup.GET("/latest", getUserLatestMessages(ctx)) // 获取最近消息
-	}
-
-	// 如果提供内置对象存储服务，则开放接口
-	if ctx.ObjectStorage() != nil {
-		objectGroup := httpEngine.Group("/object")
-		objectGroup.Use(authMiddleware)
-		{
-			objectGroup.GET("/upload_params", getUploadParams(ctx)) // 获取对象上传参数
-			objectGroup.GET("/:id", getObject(ctx))                 // 获取对象,鉴权后重定向到签名后的minio地址
-		}
 	}
 
 	systemGroup := httpEngine.Group("/system")

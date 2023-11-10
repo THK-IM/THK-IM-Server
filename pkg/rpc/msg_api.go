@@ -36,7 +36,7 @@ func (d defaultMsgApi) PostUserOnlineStatus(req dto.PostUserOnlineReq) error {
 	}
 	url := fmt.Sprintf("%s%s", d.endpoint, msgApiPostUserOnlineStatusUrl)
 	res, errRequest := d.client.R().
-		SetHeader("Content-Type", "application/json").
+		SetHeader("Content-Type", contentType).
 		SetBody(dataBytes).
 		Post(url)
 	if errRequest != nil {

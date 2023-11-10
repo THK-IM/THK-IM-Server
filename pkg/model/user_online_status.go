@@ -59,13 +59,9 @@ func (d defaultUserOnlineStatusModel) UpdateUserOnlineStatus(userId, onlineTime,
 		return tx.Exec(sqlStr, userId, onlineTime, connId, platform).Error
 	} else {
 		// 连接id不相等时更新
-		if connId != onlineStatus.ConnId {
-			sqlStr = "update " + d.genUserOnlineStatusTable(userId) +
-				" set online_time = ? where user_id = ? and conn_id = ?"
-			return tx.Exec(sqlStr, onlineTime, userId, connId).Error
-		} else {
-			return nil
-		}
+		sqlStr = "update " + d.genUserOnlineStatusTable(userId) +
+			" set online_time = ?, conn_id = ? where user_id = ? and conn_id = ?"
+		return tx.Exec(sqlStr, onlineTime, connId, userId, onlineStatus.ConnId).Error
 	}
 }
 

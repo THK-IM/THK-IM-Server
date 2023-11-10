@@ -16,7 +16,7 @@ import (
 )
 
 func TestUpload(t *testing.T) {
-	uri := "/object/upload_params"
+	uri := "session/object/upload_params"
 	url := fmt.Sprintf("%s%s", getTestEndPoint(), uri)
 	contentType := "application/json"
 	count := 1

@@ -9,12 +9,6 @@ import (
 )
 
 const (
-	MsgTypeText  = 1
-	MsgTypeImage = 2
-	MsgTypeAudio = 3
-	MsgTypeVideo = 4
-	MsgTypeEmoji = 5
-
 	// MsgTypeReceived 已接收消息
 	MsgTypeReceived = -1
 	// MsgTypeRead 已读消息

@@ -35,6 +35,7 @@ type (
 	}
 
 	UserMessageModel interface {
+		FindUserMessages(userId, sessionId int64, messageId []int64) ([]*UserMessage, error)
 		FindUserMessage(userId, sessionId, messageId int64) (*UserMessage, error)
 		InsertUserMessage(m *UserMessage) error
 		AckUserMessages(userId int64, sessionId int64, messageIds []int64) error
@@ -50,6 +51,13 @@ type (
 		snowflakeNode *snowflake.Node
 	}
 )
+
+func (d defaultUserMessageModel) FindUserMessages(userId, sessionId int64, messageId []int64) ([]*UserMessage, error) {
+	results := make([]*UserMessage, 0)
+	strSql := "select * from " + d.genUserMessageTableName(userId) + " where user_id = ? and session_id = ? and msg_id in ?"
+	err := d.db.Raw(strSql, userId, sessionId, messageId).Scan(results).Error
+	return results, err
+}
 
 func (d defaultUserMessageModel) FindUserMessage(userId, sessionId, messageId int64) (*UserMessage, error) {
 	result := &UserMessage{}
