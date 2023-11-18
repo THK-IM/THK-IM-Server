@@ -9,14 +9,14 @@ import (
 )
 
 const (
+	// MsgTypeRevoke 撤回消息
+	MsgTypeRevoke = -1001
 	// MsgTypeReceived 已接收消息
 	MsgTypeReceived = -1
 	// MsgTypeRead 已读消息
 	MsgTypeRead = -2
-	// MsgTypeRevoke 撤回消息
-	MsgTypeRevoke = -3
 	// MsgTypeReedit 重编辑消息
-	MsgTypeReedit = -4
+	MsgTypeReedit = -3
 )
 
 type (

@@ -60,7 +60,7 @@ func onMqSaveMsgEventReceived(m map[string]interface{}, appCtx *app.Context) err
 					}
 				}
 				if message.Type == model.MsgTypeRevoke && message.RMsgId != nil {
-					err = appCtx.UserMessageModel().UpdateUserMessage(r, message.SId, []int64{*message.RMsgId}, model.MsgStatusRevoke, nil)
+					err = appCtx.UserMessageModel().DeleteMessages(r, message.SId, []int64{*message.RMsgId}, nil, nil)
 					if err != nil {
 						return err
 					}

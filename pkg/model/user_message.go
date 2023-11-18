@@ -13,8 +13,7 @@ const (
 	MsgStatusClientRead = 2 // 客户端已读
 	MsgStatusServerRead = 4 // 服务端已读
 	MsgStatusRead       = MsgStatusClientRead | MsgStatusServerRead
-	MsgStatusRevoke     = 8
-	MsgStatusReedit     = 16
+	MsgStatusReedit     = 8
 )
 
 type (
@@ -79,9 +78,9 @@ func (d defaultUserMessageModel) AckUserMessages(userId int64, sessionId int64, 
 
 func (d defaultUserMessageModel) GetUserMessages(userId int64, ctime int64, offset, count int) ([]*UserMessage, error) {
 	result := make([]*UserMessage, 0)
-	strSql := "select * from " + d.genUserMessageTableName(userId) + " where user_id = ? and deleted = 0 and (status = 0 or (create_time > ? and status & ? = 0)) order by create_time limit ? offset ?"
+	strSql := "select * from " + d.genUserMessageTableName(userId) + " where user_id = ? and deleted = 0 and (status = 0 or (create_time > ?) order by create_time limit ? offset ?"
 
-	tx := d.db.Raw(strSql, userId, ctime, MsgStatusRevoke, count, offset).Scan(&result)
+	tx := d.db.Raw(strSql, userId, ctime, count, offset).Scan(&result)
 	if tx.Error != nil {
 		return nil, tx.Error
 	}

@@ -70,11 +70,13 @@ func (l *MessageLogic) RevokeUserMessage(req dto.RevokeUserMessageReq) error {
 		} // 发送给session下的所有人
 		if _, err = l.SendMessage(sendMessageReq); err != nil {
 			l.appCtx.Logger().Errorf("RevokeUserMessage err:%d, %d, %d, %v", req.UId, req.SId, req.MsgId, err)
+			return err
 		}
+		return nil
 	} else {
 		l.appCtx.Logger().Errorf("RevokeUserMessage err:%d, %d, %d, %v", req.UId, req.SId, req.MsgId, err)
+		return err
 	}
-	return nil
 }
 
 func (l *MessageLogic) ReeditUserMessage(req dto.ReeditUserMessageReq) error {
