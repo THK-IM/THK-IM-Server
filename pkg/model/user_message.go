@@ -78,7 +78,7 @@ func (d defaultUserMessageModel) AckUserMessages(userId int64, sessionId int64, 
 
 func (d defaultUserMessageModel) GetUserMessages(userId int64, ctime int64, offset, count int) ([]*UserMessage, error) {
 	result := make([]*UserMessage, 0)
-	strSql := "select * from " + d.genUserMessageTableName(userId) + " where user_id = ? and deleted = 0 and (status = 0 or (create_time > ?) order by create_time limit ? offset ?"
+	strSql := "select * from " + d.genUserMessageTableName(userId) + " where user_id = ? and deleted = 0 and (status = 0 or create_time > ?) order by create_time limit ? offset ?"
 
 	tx := d.db.Raw(strSql, userId, ctime, count, offset).Scan(&result)
 	if tx.Error != nil {
