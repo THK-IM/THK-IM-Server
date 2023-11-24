@@ -21,36 +21,39 @@ type (
 	}
 
 	SessionObjectModel interface {
-		AddSession(sId int64, objectIds []int64, fromUId, clientMsgId, newSId int64) error
+		AddSession(sId int64, fromUIds, clientMsgIds []int64, newFromUId, newClientMsgId, newSId int64) error
 		Insert(sId, fromUId, clientId int64, engine, key string) (int64, error)
 		FindObject(id, sId int64) (*SessionObject, error)
 	}
 
 	defaultSessionObjectModel struct {
+		db            *gorm.DB
 		shards        int64
 		logger        *logrus.Entry
-		db            *gorm.DB
 		snowflakeNode *snowflake.Node
 	}
 )
 
-func (d defaultSessionObjectModel) AddSession(sId int64, objectIds []int64, fromUId, clientMsgId, newSId int64) error {
+func (d defaultSessionObjectModel) AddSession(sId int64, fromUIds, clientMsgIds []int64, newFromUId, newClientMsgId, newSId int64) error {
 	db := d.db
 	tableName := d.genObjectTableName(sId)
-	sql := fmt.Sprintf("select * from %s where s_id = ? and id in ?", tableName)
+	sql := fmt.Sprintf("select * from %s where s_id = ? and from_user_id in ? and client_id in ?", tableName)
 	objects := make([]*SessionObject, 0)
-	err := db.Raw(sql, sId, objectIds).Scan(objects).Error
+	err := db.Raw(sql, sId, fromUIds, clientMsgIds).Scan(&objects).Error
 	if err != nil {
 		return err
 	}
 	if len(objects) == 0 {
 		return errorx.ErrParamsError
 	}
-	for _, object := range objects {
-		object.Id = d.snowflakeNode.Generate().Int64()
+	now := time.Now().UnixMilli()
+	for i, object := range objects {
+		object.Id = objects[i].Id
 		object.SId = newSId
-		object.FromUserId = fromUId
-		object.ClientId = clientMsgId
+		object.FromUserId = newFromUId
+		object.ClientId = newClientMsgId
+		object.Key = objects[i].Key
+		object.CreateTime = now
 	}
 	newTableName := d.genObjectTableName(newSId)
 	err = db.Table(newTableName).CreateInBatches(objects, len(objects)).Error
@@ -68,12 +71,12 @@ func (d defaultSessionObjectModel) Insert(sId, fromUId, clientId int64, engine, 
 		Key:        key,
 		CreateTime: time.Now().UnixMilli(),
 	}
-	tableName := d.genObjectTableName(id)
+	tableName := d.genObjectTableName(sId)
 	return id, d.db.Table(tableName).Create(o).Error
 }
 
 func (d defaultSessionObjectModel) FindObject(id, sId int64) (*SessionObject, error) {
-	tableName := d.genObjectTableName(id)
+	tableName := d.genObjectTableName(sId)
 	sql := fmt.Sprintf("select * from %s where id = ? and s_id = ? limit 0, 1", tableName)
 	object := &SessionObject{}
 	err := d.db.Raw(sql, id, sId).Scan(object).Error

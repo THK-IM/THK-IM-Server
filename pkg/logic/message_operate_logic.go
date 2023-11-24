@@ -106,8 +106,8 @@ func (l *MessageLogic) ReeditUserMessage(req dto.ReeditUserMessageReq) error {
 }
 
 func (l *MessageLogic) ForwardUserMessages(req dto.ForwardUserMessageReq) (*dto.SendMessageRes, error) {
-	if len(req.ForwardObjectIds) > 0 {
-		err := l.appCtx.SessionObjectModel().AddSession(req.SId, req.ForwardObjectIds, req.FUid, req.CId, req.ForwardSId)
+	if len(req.ForwardClientIds) > 0 && len(req.ForwardClientIds) > 0 {
+		err := l.appCtx.SessionObjectModel().AddSession(req.ForwardSId, req.ForwardFromUIds, req.ForwardClientIds, req.FUid, req.CId, req.SId)
 		if err != nil {
 			return nil, err
 		}

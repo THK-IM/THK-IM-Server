@@ -28,5 +28,6 @@ type ReeditUserMessageReq struct {
 type ForwardUserMessageReq struct {
 	SendMessageReq
 	ForwardSId       int64   `json:"fwd_s_id" binding:"required"`
-	ForwardObjectIds []int64 `json:"fwd_object_ids" binding:"required"`
+	ForwardFromUIds  []int64 `json:"fwd_from_u_ids" binding:"required"`
+	ForwardClientIds []int64 `json:"fwd_client_ids" binding:"required"`
 }

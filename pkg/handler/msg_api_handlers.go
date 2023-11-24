@@ -52,12 +52,12 @@ func RegisterApiHandlers(ctx *app.Context) {
 	{
 		messageGroup.GET("/latest", getUserLatestMessages(ctx)) // 获取最近消息
 		messageGroup.POST("", sendMessage(ctx))                 // 发送消息
-		messageGroup.POST("/forward", forwardUserMessage(ctx))  // 转发用户消息
 		messageGroup.DELETE("", deleteUserMessage(ctx))         // 删除消息
 		messageGroup.POST("/ack", ackUserMessages(ctx))         // 用户消息设置ack(已接收) 不支持超级群
 		messageGroup.POST("/read", readUserMessage(ctx))        // 用户消息设置已读 不支持超级群
 		messageGroup.POST("/revoke", revokeUserMessage(ctx))    // 用户消息撤回
 		messageGroup.POST("/reedit", reeditUserMessage(ctx))    // 更新用户消息
+		messageGroup.POST("/forward", forwardUserMessage(ctx))  // 转发用户消息
 	}
 
 	systemGroup := httpEngine.Group("/system")
