@@ -2,7 +2,6 @@ package model
 
 import (
 	"fmt"
-	"github.com/THK-IM/THK-IM-Server/pkg/errorx"
 	"github.com/bwmarrin/snowflake"
 	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
@@ -43,21 +42,21 @@ func (d defaultSessionObjectModel) AddSession(sId int64, fromUIds, clientMsgIds 
 	if err != nil {
 		return err
 	}
-	if len(objects) == 0 {
-		return errorx.ErrParamsError
+	if len(objects) > 0 {
+		now := time.Now().UnixMilli()
+		for i, object := range objects {
+			object.Id = objects[i].Id
+			object.SId = newSId
+			object.FromUserId = newFromUId
+			object.ClientId = newClientMsgId
+			object.Key = objects[i].Key
+			object.CreateTime = now
+		}
+		newTableName := d.genObjectTableName(newSId)
+		err = db.Table(newTableName).CreateInBatches(objects, len(objects)).Error
+		return err
 	}
-	now := time.Now().UnixMilli()
-	for i, object := range objects {
-		object.Id = objects[i].Id
-		object.SId = newSId
-		object.FromUserId = newFromUId
-		object.ClientId = newClientMsgId
-		object.Key = objects[i].Key
-		object.CreateTime = now
-	}
-	newTableName := d.genObjectTableName(newSId)
-	err = db.Table(newTableName).CreateInBatches(objects, len(objects)).Error
-	return err
+	return nil
 }
 
 func (d defaultSessionObjectModel) Insert(sId, fromUId, clientId int64, engine, key string) (int64, error) {
