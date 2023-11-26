@@ -44,6 +44,7 @@ type (
 		FindEntityIdsInUserSession(userId, sessionId int64) []int64
 		GetUserSessions(userId, mTime int64, offset, count int) ([]*UserSession, error)
 		GetUserSession(userId, sessionId int64) (*UserSession, error)
+		GenUserSessionTableName(userId int64) string
 	}
 
 	defaultUserSessionModel struct {
@@ -62,13 +63,13 @@ func (d defaultUserSessionModel) RecoverUserSession(userId, sessionId, time int6
 	updateMap["create_time"] = time
 	updateMap["update_time"] = time
 	updateMap["deleted"] = 0
-	return d.db.Table(d.genUserSessionTableName(userId)).Where("user_id = ? and session_id = ?", conditions).Updates(updateMap).Error
+	return d.db.Table(d.GenUserSessionTableName(userId)).Where("user_id = ? and session_id = ?", conditions).Updates(updateMap).Error
 
 }
 
 func (d defaultUserSessionModel) FindUserSessionByEntityId(userId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error) {
 	userSession := &UserSession{}
-	sqlStr := "select * from " + d.genUserSessionTableName(userId) + " where user_id = ? and entity_id = ? and type = ?"
+	sqlStr := "select * from " + d.GenUserSessionTableName(userId) + " where user_id = ? and entity_id = ? and type = ?"
 	if !containDeleted {
 		sqlStr += " and deleted = 0"
 	}
@@ -101,7 +102,7 @@ func (d defaultUserSessionModel) UpdateUserSession(userIds []int64, sessionId in
 			continue
 		}
 		sqlBuffer := bytes.Buffer{}
-		sqlBuffer.WriteString(fmt.Sprintf("update %s set ", d.genUserSessionTableName(k)))
+		sqlBuffer.WriteString(fmt.Sprintf("update %s set ", d.GenUserSessionTableName(k)))
 		if sessionName != nil {
 			sqlBuffer.WriteString(fmt.Sprintf("name = '%s', ", *sessionName))
 		}
@@ -132,14 +133,14 @@ func (d defaultUserSessionModel) UpdateUserSession(userIds []int64, sessionId in
 
 func (d defaultUserSessionModel) FindEntityIdsInUserSession(userId, sessionId int64) []int64 {
 	entityIds := make([]int64, 0)
-	sqlStr := fmt.Sprintf("select entity_id from %s where user_id = ? and session_id = ? and deleted = 0", d.genUserSessionTableName(userId))
+	sqlStr := fmt.Sprintf("select entity_id from %s where user_id = ? and session_id = ? and deleted = 0", d.GenUserSessionTableName(userId))
 	_ = d.db.Raw(sqlStr, userId, sessionId).Scan(&entityIds).Error
 	return entityIds
 }
 
 func (d defaultUserSessionModel) GetUserSessions(userId, mTime int64, offset, count int) ([]*UserSession, error) {
 	userSessions := make([]*UserSession, 0)
-	sqlStr := "select * from " + d.genUserSessionTableName(userId) + " where user_id = ? and update_time <= ? limit ? offset ?"
+	sqlStr := "select * from " + d.GenUserSessionTableName(userId) + " where user_id = ? and update_time <= ? limit ? offset ?"
 	err := d.db.Raw(sqlStr, userId, mTime, count, offset).Scan(&userSessions).Error
 	if err != nil {
 		return nil, err
@@ -149,7 +150,7 @@ func (d defaultUserSessionModel) GetUserSessions(userId, mTime int64, offset, co
 
 func (d defaultUserSessionModel) GetUserSession(userId, sessionId int64) (*UserSession, error) {
 	userSession := &UserSession{}
-	sqlStr := "select * from " + d.genUserSessionTableName(userId) + " where user_id = ? and session_id = ?"
+	sqlStr := "select * from " + d.GenUserSessionTableName(userId) + " where user_id = ? and session_id = ?"
 	err := d.db.Raw(sqlStr, userId, sessionId).Scan(userSession).Error
 	if err != nil {
 		return nil, err
@@ -157,7 +158,7 @@ func (d defaultUserSessionModel) GetUserSession(userId, sessionId int64) (*UserS
 	return userSession, nil
 }
 
-func (d defaultUserSessionModel) genUserSessionTableName(userId int64) string {
+func (d defaultUserSessionModel) GenUserSessionTableName(userId int64) string {
 	return "user_session_" + fmt.Sprintf("%02d", userId%(d.shards))
 }
 

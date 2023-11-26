@@ -105,6 +105,10 @@ func (c *Context) UserSessionModel() model.UserSessionModel {
 	return c.modelMap["user_session"].(model.UserSessionModel)
 }
 
+func (c *Context) ObjectModel() model.ObjectModel {
+	return c.modelMap["object"].(model.ObjectModel)
+}
+
 func (c *Context) SessionObjectModel() model.SessionObjectModel {
 	return c.modelMap["session_object"].(model.SessionObjectModel)
 }

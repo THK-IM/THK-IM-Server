@@ -10,7 +10,7 @@ import (
 
 const (
 	// MsgTypeRevoke 撤回消息
-	MsgTypeRevoke = -1001
+	MsgTypeRevoke = 100
 	// MsgTypeReceived 已接收消息
 	MsgTypeReceived = -1
 	// MsgTypeRead 已读消息

@@ -46,6 +46,8 @@ Models:
     Shards: 5
   - Name: "user_message"
     Shards: 5
+  - Name: "object"
+    Shards: 5
   - Name: "session_object"
     Shards: 5
   - Name: "user_online_status"
