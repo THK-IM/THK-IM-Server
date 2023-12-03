@@ -19,6 +19,5 @@ type (
 	GetDownloadUrlReq struct {
 		UId int64 `json:"u_id"`
 		Id  int64 `json:"id" form:"id"`
-		SId int64 `json:"s_id" form:"s_id"`
 	}
 )
