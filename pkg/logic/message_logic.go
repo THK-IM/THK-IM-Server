@@ -120,6 +120,10 @@ func (l *MessageLogic) SendMessage(req dto.SendMessageReq) (*dto.SendMessageRes,
 		return nil, errorx.ErrUserReject
 	}
 
+	if len(receivers) == 1 && receivers[0] == req.FUid {
+		return nil, errorx.ErrUserReject
+	}
+
 	// 根据clientId和fromUserId查询是否已经发送过消息
 	sessionMessage, errMessage := l.appCtx.SessionMessageModel().FindMessageByClientId(req.SId, req.CId, req.FUid)
 	// 如果已经发送过，直接取数据库里的数据库, 没有发送过则插入数据库
