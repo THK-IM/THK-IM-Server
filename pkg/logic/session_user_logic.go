@@ -54,7 +54,7 @@ func (l *SessionLogic) AddUser(sid int64, req dto.SessionAddUserReq) error {
 	return err
 }
 
-func (l *SessionLogic) DelUser(sid int64, req dto.SessionDelUserReq) error {
+func (l *SessionLogic) DelSessionUser(sid int64, deleteMsg bool, req dto.SessionDelUserReq) error {
 	lockKey := fmt.Sprintf(sessionUpdateLockKey, l.appCtx.Config().Name, sid)
 	locker := l.appCtx.NewLocker(lockKey, 1000, 1000)
 	success, lockErr := locker.Lock()
@@ -70,7 +70,15 @@ func (l *SessionLogic) DelUser(sid int64, req dto.SessionDelUserReq) error {
 	if err != nil {
 		return err
 	}
+	if deleteMsg {
+		for _, uid := range req.UIds {
+			if err = l.appCtx.UserMessageModel().DeleteMessagesBySessionId(uid, sid); err != nil {
+				return err
+			}
+		}
+	}
 	return l.appCtx.SessionUserModel().DelUser(session, req.UIds)
+
 }
 
 func (l *SessionLogic) UpdateSessionUser(req dto.SessionUserUpdateReq) (err error) {

@@ -40,6 +40,7 @@ type (
 		AckUserMessages(userId int64, sessionId int64, messageIds []int64) error
 		GetUserMessages(userId int64, ctime int64, offset, count int) ([]*UserMessage, error)
 		DeleteMessages(userId int64, sessionId int64, messageIds []int64, from, to *int64) error
+		DeleteMessagesBySessionId(userId int64, sessionId int64) error
 		UpdateUserMessage(userId int64, sessionId int64, msgIds []int64, status int, content *string) error
 	}
 
@@ -102,6 +103,14 @@ func (d defaultUserMessageModel) DeleteMessages(userId int64, sessionId int64, m
 	} else {
 		return nil
 	}
+}
+
+func (d defaultUserMessageModel) DeleteMessagesBySessionId(userId int64, sessionId int64) error {
+	sqlStr := fmt.Sprintf(
+		"update %s set deleted = 1 where user_id = ? and session_id = ? ",
+		d.genUserMessageTableName(userId))
+	err := d.db.Exec(sqlStr, userId, sessionId).Error
+	return err
 }
 
 func (d defaultUserMessageModel) UpdateUserMessage(userId int64, sessionId int64, msgIds []int64, status int, content *string) error {

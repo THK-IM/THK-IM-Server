@@ -120,7 +120,7 @@ func deleteSessionUser(appCtx *app.Context) gin.HandlerFunc {
 			}
 		}
 
-		if e := l.DelUser(sessionId, req); e != nil {
+		if e := l.DelSessionUser(sessionId, true, req); e != nil {
 			appCtx.Logger().Warn(e.Error())
 			dto.ResponseInternalServerError(ctx, e)
 		} else {

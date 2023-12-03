@@ -300,7 +300,7 @@ func deleteUserSession(appCtx *app.Context) gin.HandlerFunc {
 		req := dto.SessionDelUserReq{
 			UIds: []int64{iUid},
 		}
-		if err := l.DelUser(iSid, req); err != nil {
+		if err := l.DelSessionUser(iSid, true, req); err != nil {
 			appCtx.Logger().Warn(e2)
 			dto.ResponseInternalServerError(ctx, err)
 		} else {
