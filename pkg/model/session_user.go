@@ -38,7 +38,7 @@ type (
 		FindSessionUserCount(sessionId int64) (int, error)
 		FindUIdsInSessionWithoutStatus(sessionId int64, status int, uIds []int64) []int64
 		FindUIdsInSessionContainStatus(sessionId int64, status int, uIds []int64) []int64
-		AddUser(session *Session, entityIds []int64, userIds []int64, role []int, maxCount int) (err error)
+		AddUser(session *Session, entityIds []int64, userIds []int64, role []int, maxCount int) ([]*UserSession, error)
 		DelUser(session *Session, userIds []int64) (err error)
 		UpdateUser(sessionId int64, userIds []int64, role, status *int, mute *string) (err error)
 	}
@@ -149,7 +149,7 @@ func (d defaultSessionUserModel) FindUIdsInSessionContainStatus(sessionId int64,
 	return uIds
 }
 
-func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, userIds []int64, role []int, maxCount int) (err error) {
+func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, userIds []int64, role []int, maxCount int) (userSessions []*UserSession, err error) {
 	tx := d.db.Begin()
 	defer func() {
 		if err == nil {
@@ -162,11 +162,11 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, us
 	tableName := d.genSessionUserTableName(session.Id)
 	sqlStr := fmt.Sprintf("select count(0) from %s where session_id = ? and user_id not in ? and deleted = 0", tableName)
 	if err = tx.Raw(sqlStr, session.Id, userIds).Scan(&count).Error; err != nil {
-		return err
+		return nil, err
 	}
 
 	if count > maxCount-len(userIds) {
-		return errorx.ErrGroupMemberCountBeyond
+		return nil, errorx.ErrGroupMemberCountBeyond
 	}
 
 	t := time.Now().UnixMilli()
@@ -178,9 +178,10 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, us
 	if session.Mute == 1 {
 		userMute = 1
 	}
+	userSessions = make([]*UserSession, 0)
 	for index, id := range userIds {
 		if err = tx.Exec(sql1, session.Id, id, role[index], session.Type, t, t, role[index], 0, t).Error; err != nil {
-			return err
+			return nil, err
 		}
 
 		sql2 := "insert into " + d.genUserSessionTableName(id) +
@@ -189,10 +190,26 @@ func (d defaultSessionUserModel) AddUser(session *Session, entityIds []int64, us
 
 		if err = tx.Exec(sql2, session.Id, id, session.Type, entityIds[index], role[index], session.Name, session.Remark, userMute, t, t,
 			0, role[index], session.Name, session.Remark, userMute, 0, t).Error; err != nil {
-			return err
+			return nil, err
 		}
+		userSession := &UserSession{
+			SessionId:  session.Id,
+			UserId:     userIds[index],
+			Type:       session.Type,
+			EntityId:   entityIds[index],
+			Name:       session.Name,
+			Remark:     session.Remark,
+			Top:        0,
+			Role:       role[index],
+			Mute:       userMute,
+			Status:     0,
+			CreateTime: t,
+			UpdateTime: t,
+			Deleted:    0,
+		}
+		userSessions = append(userSessions, userSession)
 	}
-	return nil
+	return
 }
 
 func (d defaultSessionUserModel) DelUser(session *Session, userIds []int64) (err error) {

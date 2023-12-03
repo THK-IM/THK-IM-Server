@@ -11,6 +11,7 @@ var (
 	ErrMessageFormat          = NewErrorX(4000007, "Message format error")
 	ErrMessageTypeNotSupport  = NewErrorX(4000008, "Message type not support")
 	ErrSessionMessageInvalid  = NewErrorX(4000009, "Invalid session or message")
+	ErrGroupAlreadyCreated    = NewErrorX(4000010, "group has been created")
 	ErrSessionMuted           = NewErrorX(4001001, "Session muted")
 	ErrUserMuted              = NewErrorX(4001002, "User muted")
 	ErrUserReject             = NewErrorX(4001003, "user reject your message")

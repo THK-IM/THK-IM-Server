@@ -38,7 +38,6 @@ type (
 	}
 
 	UserSessionModel interface {
-		RecoverUserSession(userId, sessionId, time int64) error
 		FindUserSessionByEntityId(userId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error)
 		UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int) error
 		FindEntityIdsInUserSession(userId, sessionId int64) []int64
@@ -54,18 +53,6 @@ type (
 		snowflakeNode *snowflake.Node
 	}
 )
-
-func (d defaultUserSessionModel) RecoverUserSession(userId, sessionId, time int64) error {
-	conditions := []int64{userId, sessionId}
-	updateMap := make(map[string]interface{})
-	updateMap["top"] = 0
-	updateMap["status"] = 0
-	updateMap["create_time"] = time
-	updateMap["update_time"] = time
-	updateMap["deleted"] = 0
-	return d.db.Table(d.GenUserSessionTableName(userId)).Where("user_id = ? and session_id = ?", conditions).Updates(updateMap).Error
-
-}
 
 func (d defaultUserSessionModel) FindUserSessionByEntityId(userId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error) {
 	userSession := &UserSession{}

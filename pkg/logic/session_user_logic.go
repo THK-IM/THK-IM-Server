@@ -50,7 +50,7 @@ func (l *SessionLogic) AddUser(sid int64, req dto.SessionAddUserReq) error {
 		roles = append(roles, req.Role)
 		entityIds = append(entityIds, req.EntityId)
 	}
-	err = l.appCtx.SessionUserModel().AddUser(session, entityIds, req.UIds, roles, maxCount)
+	_, err = l.appCtx.SessionUserModel().AddUser(session, entityIds, req.UIds, roles, maxCount)
 	return err
 }
 
