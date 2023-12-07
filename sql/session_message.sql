@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS `session_message_%s`
     `msg_content`  TEXT    NOT NULL COMMENT '消息内容',
     `at_users`     TEXT COMMENT '@谁, uid数据',
     `reply_msg_id` BIGINT COMMENT '回复消息id',
+    `ext_data`    TEXT    NOT NULL COMMENT '扩展字段',
     `create_time`  BIGINT  NOT NULL DEFAULT 0 COMMENT '创建时间',
     `update_time`  BIGINT  NOT NULL DEFAULT 0 COMMENT '更新时间',
     `deleted`      TINYINT NOT NULL DEFAULT 0 COMMENT '消息删除状态',

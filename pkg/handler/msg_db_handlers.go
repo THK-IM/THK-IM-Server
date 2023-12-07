@@ -9,7 +9,7 @@ import (
 	"github.com/THK-IM/THK-IM-Server/pkg/model"
 )
 
-func RegisterSaveMsgHandlers(appCtx *app.Context) {
+func RegisterMsgDbHandlers(appCtx *app.Context) {
 	appCtx.MsgSaverSubscriber().Sub(func(m map[string]interface{}) error {
 		return onMqSaveMsgEventReceived(m, appCtx)
 	})
@@ -41,6 +41,7 @@ func onMqSaveMsgEventReceived(m map[string]interface{}, appCtx *app.Context) err
 				AtUsers:    message.AtUsers,
 				MsgType:    message.Type,
 				MsgContent: message.Body,
+				ExtData:    message.ExtData,
 				ReplyMsgId: message.RMsgId,
 				Status:     status,
 				CreateTime: message.CTime,

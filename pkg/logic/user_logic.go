@@ -65,8 +65,7 @@ func (l *UserLogic) KickUser(req *dto.KickUserReq) error {
 		return err
 	} else {
 		msg := make(map[string]interface{})
-		msg[event.PushEventTypeKey] = event.PushUserEventType
-		msg[event.PushEventSubTypeKey] = event.UserEventSubtypeKickOff
+		msg[event.PushEventTypeKey] = event.SignalKickOffUser
 		msg[event.PushEventReceiversKey] = string(idsStr)
 		msg[event.PushEventBodyKey] = "kickOff"
 		return l.appCtx.MsgPusherPublisher().Pub("", msg)

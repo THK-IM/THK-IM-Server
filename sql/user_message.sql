@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `user_message_%s`
     `msg_content`  TEXT    NOT NULL COMMENT '消息内容',
     `at_users`     TEXT COMMENT '@谁, uid数据',
     `reply_msg_id` BIGINT COMMENT '回复消息id',
+    `ext_data`     TEXT    NOT NULL COMMENT '扩展字段',
     `status`       TINYINT NOT NULL DEFAULT 0 COMMENT '用户消息状态:0:默认,2^0:已经发送给用户,2^1:客户端已读, 2^2:服务端已读, 2^3:用户撤回, 2^4:重新编辑',
     `create_time`  BIGINT  NOT NULL DEFAULT 0 COMMENT '创建时间',
     `update_time`  BIGINT  NOT NULL DEFAULT 0 COMMENT '更新时间',

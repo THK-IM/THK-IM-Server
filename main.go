@@ -45,7 +45,7 @@ func initConfig() *conf.Config {
 }
 
 func initMsgApiServer(appCtx *app.Context) {
-	handler.RegisterApiHandlers(appCtx)
+	handler.RegisterMsgApiHandlers(appCtx)
 	if err := loader.LoadTables(appCtx.Config().Models, appCtx.Database()); err != nil {
 		panic(err)
 	}
@@ -61,7 +61,7 @@ func initMsgPushServer(appCtx *app.Context) {
 }
 
 func initMsgDBServer(appCtx *app.Context) {
-	handler.RegisterSaveMsgHandlers(appCtx)
+	handler.RegisterMsgDbHandlers(appCtx)
 }
 
 func main() {

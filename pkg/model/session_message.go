@@ -29,6 +29,7 @@ type (
 		MsgContent string  `gorm:"msg_content" json:"msg_content"`
 		AtUsers    *string `gorm:"at_users" json:"at_users"`
 		ReplyMsgId *int64  `gorm:"reply_msg_id" json:"reply_msg_id"`
+		ExtData    *string `gorm:"ext_data" json:"ext_data"`
 		CreateTime int64   `gorm:"create_time" json:"create_time"`
 		UpdateTime int64   `gorm:"update_time" json:"update_time"`
 		Deleted    int8    `gorm:"deleted" json:"deleted"`
@@ -39,7 +40,7 @@ type (
 		DeleteSessionMessage(sessionId, msgId int64, fUid int64) (int64, error)
 		FindSessionMessage(sessionId, msgId, fUid int64) (*SessionMessage, error)
 		DelMessages(sessionId int64, messageIds []int64, from, to int64) error
-		InsertMessage(clientId int64, fromUserId int64, sessionId int64, msgId int64, msgContent string,
+		InsertMessage(clientId int64, fromUserId int64, sessionId int64, msgId int64, msgContent string, extData *string,
 			msgType int, atUserIds *string, replayMsgId *int64) (*SessionMessage, error)
 		FindMessageByClientId(sessionId, clientId, fromUId int64) (*SessionMessage, error)
 		GetSessionMessages(sessionId, ctime int64, offset, count int, msgIds []int64) ([]*SessionMessage, error)
@@ -85,7 +86,7 @@ func (d defaultSessionMessageModel) DelMessages(sessionId int64, messageIds []in
 }
 
 func (d defaultSessionMessageModel) InsertMessage(clientId int64, fromUserId int64, sessionId int64, msgId int64,
-	msgContent string, msgType int, atUserIds *string, replayMsgId *int64) (*SessionMessage, error) {
+	msgContent string, extData *string, msgType int, atUserIds *string, replayMsgId *int64) (*SessionMessage, error) {
 	currTime := time.Now().UnixMilli()
 	sessionMessage := &SessionMessage{
 		MsgId:      msgId,
@@ -94,6 +95,7 @@ func (d defaultSessionMessageModel) InsertMessage(clientId int64, fromUserId int
 		FromUserId: fromUserId,
 		AtUsers:    atUserIds,
 		MsgType:    msgType,
+		ExtData:    extData,
 		MsgContent: msgContent,
 		ReplyMsgId: replayMsgId,
 		CreateTime: currTime,

@@ -91,7 +91,7 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 }
 
 func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (*dto.CreateSessionRes, error) {
-	session, err := l.appCtx.SessionModel().CreateEmptySession(req.Type)
+	session, err := l.appCtx.SessionModel().CreateEmptySession(req.Type, req.ExtData)
 	if err != nil {
 		return nil, err
 	}
@@ -163,7 +163,7 @@ func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) error {
 			l.appCtx.Logger().Errorf("release locker success: %t, error: %s", success, lockErr.Error())
 		}
 	}()
-	err := l.appCtx.SessionModel().UpdateSession(req.Id, req.Name, req.Remark, req.Mute)
+	err := l.appCtx.SessionModel().UpdateSession(req.Id, req.Name, req.Remark, req.Mute, req.ExtData)
 	if err != nil {
 		return err
 	}
@@ -185,7 +185,7 @@ func (l *SessionLogic) UpdateSession(req dto.UpdateSessionReq) error {
 		sql := "mute | 1"
 		mute = &sql
 	}
-	return l.appCtx.UserSessionModel().UpdateUserSession(uIds, req.Id, req.Name, req.Remark, mute, nil, nil, nil)
+	return l.appCtx.UserSessionModel().UpdateUserSession(uIds, req.Id, req.Name, req.Remark, mute, req.ExtData, nil, nil, nil, nil)
 }
 
 func (l *SessionLogic) UpdateUserSession(req dto.UpdateUserSessionReq) (err error) {
@@ -200,7 +200,7 @@ func (l *SessionLogic) UpdateUserSession(req dto.UpdateUserSessionReq) (err erro
 			l.appCtx.Logger().Errorf("release locker success: %t, error: %s", success, lockErr.Error())
 		}
 	}()
-	err = l.appCtx.UserSessionModel().UpdateUserSession([]int64{req.UId}, req.SId, nil, nil, nil, req.Top, req.Status, nil)
+	err = l.appCtx.UserSessionModel().UpdateUserSession([]int64{req.UId}, req.SId, nil, nil, nil, req.ExtData, req.Top, req.Status, nil, req.ParentId)
 	if err == nil {
 		err = l.appCtx.SessionUserModel().UpdateUser(req.SId, []int64{req.UId}, nil, req.Status, nil)
 	} else {
@@ -242,6 +242,7 @@ func (l *SessionLogic) convUserSession(userSession *model.UserSession) *dto.User
 		Top:      userSession.Top,
 		Status:   userSession.Status,
 		EntityId: userSession.EntityId,
+		ExtData:  userSession.ExtData,
 		CTime:    userSession.CreateTime,
 		MTime:    userSession.UpdateTime,
 	}

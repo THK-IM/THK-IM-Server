@@ -12,7 +12,6 @@ const (
 	ServerEventReceiversKey = "ServerEventReceivers"
 	// ServerEventBodyKey 服务端事件Body Key
 	ServerEventBodyKey = "ServerEventBody"
-
 	// ServerEventUserOnline 服务端事件:用户上线
 	ServerEventUserOnline = "user_online_event"
 )

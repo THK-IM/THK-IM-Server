@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func pushSystemMessage(appCtx *app.Context) gin.HandlerFunc {
+func pushExtendedMessage(appCtx *app.Context) gin.HandlerFunc {
 	l := logic.NewMessageLogic(appCtx)
 	return func(ctx *gin.Context) {
 		var req dto.PushMessageReq
@@ -18,9 +18,7 @@ func pushSystemMessage(appCtx *app.Context) gin.HandlerFunc {
 			return
 		}
 
-		if req.Type == event.PushCommonEventType || req.Type == event.PushUserEventType ||
-			req.Type == event.PushFriendEventType || req.Type == event.PushGroupEventType ||
-			req.Type == event.PushOtherEventType {
+		if req.Type > event.SignalExtended {
 			if rsp, err := l.PushMessage(req); err != nil {
 				appCtx.Logger().Warn(err.Error())
 				dto.ResponseInternalServerError(ctx, err)

@@ -22,24 +22,26 @@ const (
 
 type (
 	UserSession struct {
-		SessionId  int64  `gorm:"session_id" json:"session_id"`
-		UserId     int64  `gorm:"user_id" json:"user_id"`
-		Type       int    `gorm:"type" json:"type"`
-		EntityId   int64  `gorm:"entity_id" json:"entity_id"`
-		Name       string `gorm:"name" json:"name"`
-		Remark     string `gorm:"remark" json:"remark"`
-		Top        int64  `gorm:"top" json:"top"`
-		Role       int    `gorm:"role" json:"role"`
-		Mute       int    `gorm:"mute" json:"mute"`
-		Status     int    `gorm:"status" json:"status"`
-		CreateTime int64  `gorm:"create_time" json:"create_time"`
-		UpdateTime int64  `gorm:"update_time" json:"update_time"`
-		Deleted    int8   `gorm:"deleted" json:"deleted"`
+		SessionId  int64   `gorm:"session_id" json:"session_id"`
+		UserId     int64   `gorm:"user_id" json:"user_id"`
+		ParentId   int64   `gorm:"parent_id" json:"parent_id"`
+		Type       int     `gorm:"type" json:"type"`
+		EntityId   int64   `gorm:"entity_id" json:"entity_id"`
+		Name       string  `gorm:"name" json:"name"`
+		Remark     string  `gorm:"remark" json:"remark"`
+		ExtData    *string `json:"ext_data" json:"ext_data"`
+		Top        int64   `gorm:"top" json:"top"`
+		Role       int     `gorm:"role" json:"role"`
+		Mute       int     `gorm:"mute" json:"mute"`
+		Status     int     `gorm:"status" json:"status"`
+		CreateTime int64   `gorm:"create_time" json:"create_time"`
+		UpdateTime int64   `gorm:"update_time" json:"update_time"`
+		Deleted    int8    `gorm:"deleted" json:"deleted"`
 	}
 
 	UserSessionModel interface {
 		FindUserSessionByEntityId(userId, entityId int64, sessionType int, containDeleted bool) (*UserSession, error)
-		UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int) error
+		UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute, extData *string, top *int64, status, role *int, parentId *int64) error
 		FindEntityIdsInUserSession(userId, sessionId int64) []int64
 		GetUserSessions(userId, mTime int64, offset, count int) ([]*UserSession, error)
 		GetUserSession(userId, sessionId int64) (*UserSession, error)
@@ -64,7 +66,7 @@ func (d defaultUserSessionModel) FindUserSessionByEntityId(userId, entityId int6
 	return userSession, err
 }
 
-func (d defaultUserSessionModel) UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute *string, top *int64, status, role *int) (err error) {
+func (d defaultUserSessionModel) UpdateUserSession(userIds []int64, sessionId int64, sessionName, sessionRemark, mute, extData *string, top *int64, status, role *int, parentId *int64) (err error) {
 	// 分表uid数组
 	sharedUIds := make(map[int64][]int64, 0)
 	for _, uId := range userIds {
@@ -105,8 +107,14 @@ func (d defaultUserSessionModel) UpdateUserSession(userIds []int64, sessionId in
 		if mute != nil {
 			sqlBuffer.WriteString(fmt.Sprintf("mute = %s, ", *mute))
 		}
+		if extData != nil {
+			sqlBuffer.WriteString(fmt.Sprintf("ext_data = %s, ", *extData))
+		}
 		if role != nil {
 			sqlBuffer.WriteString(fmt.Sprintf("role = %d, ", *role))
+		}
+		if parentId != nil {
+			sqlBuffer.WriteString(fmt.Sprintf("parent_id = %d, ", *parentId))
 		}
 		sqlBuffer.WriteString(fmt.Sprintf("update_time = %d ", time.Now().UnixMilli()))
 		sqlBuffer.WriteString("where session_id = ? and user_id in ? ")

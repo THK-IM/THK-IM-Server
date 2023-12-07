@@ -36,32 +36,22 @@ func RegisterMsgPushHandlers(ctx *app.Context) {
 		{
 			// 下发服务器时间
 			now := time.Now().UnixMilli()
-			serverTimeBody := &event.PushBody{
-				Type:    event.PushCommonEventType,
-				SubType: 3,
-				Body:    strconv.Itoa(int(now)),
-			}
-			serverTimeBodyBytes, err := json.Marshal(serverTimeBody)
+			serverTimeBody, err := event.BuildSignalBody(event.SignalSyncTime, strconv.Itoa(int(now)))
 			if err != nil {
 				ctx.Logger().Errorf("OnClientConnected: %s", err.Error())
 			}
-			err = client.WriteMessage(string(serverTimeBodyBytes))
+			err = client.WriteMessage(serverTimeBody)
 			if err != nil {
 				ctx.Logger().Errorf("OnClientConnected: %s", err.Error())
 			}
 		}
 		{
 			// 下发连接id
-			connIdBody := &event.PushBody{
-				Type:    event.PushCommonEventType,
-				SubType: 4,
-				Body:    fmt.Sprintf("%d", client.Info().Id),
-			}
-			connIdBodyBytes, err := json.Marshal(connIdBody)
+			connIdBody, err := event.BuildSignalBody(event.SignalConnId, fmt.Sprintf("%d", client.Info().Id))
 			if err != nil {
 				ctx.Logger().Errorf("OnClientConnected: %s", err.Error())
 			}
-			err = client.WriteMessage(string(connIdBodyBytes))
+			err = client.WriteMessage(connIdBody)
 			if err != nil {
 				ctx.Logger().Errorf("OnClientConnected: %s", err.Error())
 			}
@@ -89,11 +79,11 @@ func RegisterMsgPushHandlers(ctx *app.Context) {
 	})
 
 	server.SetOnClientMsgReceived(func(msg string, client websocket.Client) {
-		wsBody := &event.PushBody{}
-		if err := json.Unmarshal([]byte(msg), wsBody); err != nil {
+		signal := &event.SignalBody{}
+		if err := json.Unmarshal([]byte(msg), signal); err != nil {
 			ctx.Logger().Errorf("json Unmarshal err: %s, msg: %s", err.Error(), msg)
 		} else {
-			err = onWsClientMsgReceived(ctx, client, wsBody.Type, wsBody.SubType, wsBody.Body)
+			err = onWsClientMsgReceived(ctx, client, signal.Type, signal.Body)
 		}
 	})
 
@@ -109,49 +99,37 @@ func RegisterMsgPushHandlers(ctx *app.Context) {
 func onMqPushMsgReceived(m map[string]interface{}, server websocket.Server, ctx *app.Context) error {
 	ctx.Logger().Info("onMqPushMsgReceived", m)
 	eventType, okType := m[event.PushEventTypeKey].(string)
-	eventSubtype, okSubType := m[event.PushEventSubTypeKey].(string)
 	uIdsStr, okId := m[event.PushEventReceiversKey].(string)
 	body, okBody := m[event.PushEventBodyKey].(string)
-	if !okType || !okSubType || !okId || !okBody {
+	if !okType || !okId || !okBody {
 		return errorx.ErrMessageFormat
 	}
 	iType, eType := strconv.Atoi(eventType)
 	if eType != nil {
 		return errorx.ErrMessageFormat
 	}
-	iSubtype, eSubType := strconv.Atoi(eventSubtype)
-	if eSubType != nil {
-		return errorx.ErrMessageFormat
-	}
-
 	uIds := make([]int64, 0)
 	if err := json.Unmarshal([]byte(uIdsStr), &uIds); err != nil {
 		return errorx.ErrMessageFormat
 	}
-	if content, err := event.BuildPushBody(iType, iSubtype, body); err != nil {
+	if content, err := event.BuildSignalBody(iType, body); err != nil {
 		return err
 	} else {
 		return server.SendMessageToUsers(uIds, content)
 	}
 }
 
-func onWsClientMsgReceived(ctx *app.Context, client websocket.Client, ty, subType int, body string) error {
-	if ty == event.PushCommonEventType {
-		if subType == 1 {
-			return onWsHeatBeatMsgReceived(ctx, client, body)
-		} else {
-			return nil
-		}
+func onWsClientMsgReceived(ctx *app.Context, client websocket.Client, ty int, body *string) error {
+	if ty == event.SignalPing {
+		return onWsHeatBeatMsgReceived(ctx, client, body)
 	}
 	return nil
 }
 
-func onWsHeatBeatMsgReceived(ctx *app.Context, client websocket.Client, body string) error {
+func onWsHeatBeatMsgReceived(ctx *app.Context, client websocket.Client, body *string) error {
 	// 心跳
-	heatBody := &event.PushBody{
-		Type:    event.PushCommonEventType,
-		SubType: 2,
-		Body:    "pong",
+	heatBody := &event.SignalBody{
+		Type: event.SignalPong,
 	}
 	heatBeat, err := json.Marshal(heatBody)
 	if err != nil {

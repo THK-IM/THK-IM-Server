@@ -27,6 +27,7 @@ type (
 		MsgContent string  `gorm:"msg_content" json:"msg_content"`
 		ReplyMsgId *int64  `gorm:"reply_msg_id" json:"reply_msg_id"`
 		AtUsers    *string `gorm:"at_users" json:"at_users"`
+		ExtData    *string `gorm:"ext_data" json:"ext_data"`
 		Status     int     `gorm:"status" json:"status"`
 		CreateTime int64   `gorm:"create_time" json:"create_time"`
 		UpdateTime int64   `gorm:"update_time" json:"update_time"`

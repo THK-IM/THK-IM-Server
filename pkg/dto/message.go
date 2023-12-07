@@ -1,5 +1,20 @@
 package dto
 
+type GetSessionMessageReq struct {
+	SId    int64  `json:"s_id" form:"id"`
+	CTime  int64  `json:"c_time" form:"c_time"`
+	Offset int    `json:"offset" form:"offset"`
+	Count  int    `json:"count" form:"count"`
+	MsgIds string `json:"msg_ids" form:"msg_ids"`
+}
+
+type DelSessionMessageReq struct {
+	SId      int64   `json:"s_id"`
+	MsgIds   []int64 `json:"msg_ids"`
+	TimeFrom int64   `json:"time_from"`
+	TimeTo   int64   `json:"time_to"`
+}
+
 type GetMessageReq struct {
 	UId    int64 `json:"u_id" form:"u_id"`
 	Offset int   `json:"offset" form:"offset"`
@@ -22,7 +37,6 @@ type DeleteMessageReq struct {
 type PushMessageReq struct {
 	UIds        []int64 `json:"u_ids" binding:"required"`
 	Type        int     `json:"type"`
-	SubType     int     `json:"sub_type"`
 	Body        string  `json:"body" binding:"required"`
 	OfflinePush bool    `json:"offline_push"`
 }
@@ -43,6 +57,7 @@ type Message struct {
 	Status  *int    `json:"status,omitempty"`
 	RMsgId  *int64  `json:"r_msg_id,omitempty"`
 	AtUsers *string `json:"at_users,omitempty"`
+	ExtData *string `json:"ext_data,omitempty"`
 }
 
 type SendMessageReq struct {
@@ -55,6 +70,7 @@ type SendMessageReq struct {
 	RMsgId    *int64  `json:"r_msg_id,omitempty"`
 	AtUsers   *string `json:"at_users,omitempty"`
 	Receivers []int64 `json:"receivers,omitempty"`
+	ExtData   *string `json:"ext_data,omitempty"`
 }
 
 type SendMessageRes struct {

@@ -32,6 +32,7 @@ func (l *MessageLogic) convSessionMessage2Message(sessionMsg *model.SessionMessa
 		CTime:   sessionMsg.CreateTime,
 		Body:    sessionMsg.MsgContent,
 		AtUsers: sessionMsg.AtUsers,
+		ExtData: sessionMsg.ExtData,
 		Type:    sessionMsg.MsgType,
 		RMsgId:  sessionMsg.ReplyMsgId,
 	}
@@ -48,6 +49,7 @@ func (l *MessageLogic) convUserMessage2Message(userMsg *model.UserMessage) *dto.
 		CTime:   userMsg.CreateTime,
 		RMsgId:  userMsg.ReplyMsgId,
 		Body:    userMsg.MsgContent,
+		ExtData: userMsg.ExtData,
 		Status:  &userMsg.Status,
 		AtUsers: userMsg.AtUsers,
 	}
@@ -130,7 +132,8 @@ func (l *MessageLogic) SendMessage(req dto.SendMessageReq) (*dto.SendMessageRes,
 	if sessionMessage == nil || sessionMessage.SessionId == 0 {
 		// 插入数据库发送消息
 		msgId := int64(l.appCtx.SnowflakeNode().Generate())
-		sessionMessage, errMessage = l.appCtx.SessionMessageModel().InsertMessage(req.CId, req.FUid, req.SId, msgId, req.Body, req.Type, req.AtUsers, req.RMsgId)
+		sessionMessage, errMessage = l.appCtx.SessionMessageModel().InsertMessage(
+			req.CId, req.FUid, req.SId, msgId, req.Body, req.ExtData, req.Type, req.AtUsers, req.RMsgId)
 		if errMessage != nil {
 			l.appCtx.Logger().Error(errMessage, req)
 			return nil, errMessage
@@ -157,6 +160,7 @@ func (l *MessageLogic) publishSendMessageEvents(sessionMsg *model.SessionMessage
 		FUid:    sessionMsg.FromUserId,
 		AtUsers: sessionMsg.AtUsers,
 		Type:    sessionMsg.MsgType,
+		ExtData: sessionMsg.ExtData,
 		Body:    sessionMsg.MsgContent,
 		RMsgId:  sessionMsg.ReplyMsgId,
 		CTime:   sessionMsg.CreateTime,
@@ -167,7 +171,8 @@ func (l *MessageLogic) publishSendMessageEvents(sessionMsg *model.SessionMessage
 		return nil, nil, err
 	}
 	msgJsonStr := string(msgJson)
-	onlineUIds, offlineUIds, errPubPush := l.pubPushMessageEvent(event.PushMsgEventType, 0, msgJsonStr, receivers, &userMsg.SId)
+	deliverKey := fmt.Sprintf("session-%d", userMsg.SId)
+	onlineUIds, offlineUIds, errPubPush := l.pubPushMessageEvent(event.SignalNewMessage, msgJsonStr, receivers, deliverKey)
 	if errPubPush != nil {
 		l.appCtx.Logger().Error("pubPushMessageEvent, err:", errPubPush)
 		return nil, nil, errPubPush
@@ -184,8 +189,9 @@ func (l *MessageLogic) publishSendMessageEvents(sessionMsg *model.SessionMessage
 
 // PushMessage 业务消息推送
 func (l *MessageLogic) PushMessage(req dto.PushMessageReq) (*dto.PushMessageRes, error) {
+	deliverKey := "push"
 	// 在线推送
-	onlineUIds, offlineUIds, err := l.pubPushMessageEvent(req.Type, req.SubType, req.Body, req.UIds, nil)
+	onlineUIds, offlineUIds, err := l.pubPushMessageEvent(req.Type, req.Body, req.UIds, deliverKey)
 	if err == nil {
 		rsp := &dto.PushMessageRes{}
 		rsp.OnlineUIds = onlineUIds
@@ -208,7 +214,7 @@ func (l *MessageLogic) pubSaveMsgEvent(msgBody string, receivers []int64, sessio
 }
 
 // 发布推送消息
-func (l *MessageLogic) pubPushMessageEvent(t, subType int, body string, uIds []int64, sessionId *int64) ([]int64, []int64, error) {
+func (l *MessageLogic) pubPushMessageEvent(t int, body string, uIds []int64, deliverKey string) ([]int64, []int64, error) {
 	onlineTimeout := l.appCtx.Config().IM.OnlineTimeout
 	onlineTime := time.Now().UnixMilli() - onlineTimeout*int64(time.Second)
 	onlineUsers, err := l.appCtx.UserOnlineStatusModel().GetOnlineUserIds(uIds, onlineTime)
@@ -233,17 +239,9 @@ func (l *MessageLogic) pubPushMessageEvent(t, subType int, body string, uIds []i
 	} else {
 		m := make(map[string]interface{})
 		m[event.PushEventTypeKey] = t
-		m[event.PushEventSubTypeKey] = subType
 		m[event.PushEventBodyKey] = body
 		m[event.PushEventReceiversKey] = string(receiverStr)
-
-		idKey := ""
-		if sessionId != nil { // 会话消息推送
-			idKey = fmt.Sprintf("message-%d", *sessionId)
-		} else { // 普通推送
-			idKey = fmt.Sprintf("push-%d-%d", t, subType)
-		}
-		err = l.appCtx.MsgPusherPublisher().Pub(idKey, m)
+		err = l.appCtx.MsgPusherPublisher().Pub(deliverKey, m)
 		return onlineUsers, offlineUsers, err
 	}
 }
