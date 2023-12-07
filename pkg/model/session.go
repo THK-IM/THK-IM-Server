@@ -30,7 +30,7 @@ type (
 	SessionModel interface {
 		UpdateSession(sessionId int64, name, remark *string, mute *int, extData *string) error
 		FindSession(sessionId int64) (*Session, error)
-		CreateEmptySession(sessionType int, extData *string) (*Session, error)
+		CreateEmptySession(sessionType int, extData *string, name string, remark string) (*Session, error)
 	}
 
 	defaultSessionModel struct {
@@ -69,12 +69,14 @@ func (d defaultSessionModel) FindSession(sessionId int64) (*Session, error) {
 	return session, err
 }
 
-func (d defaultSessionModel) CreateEmptySession(sessionType int, extData *string) (*Session, error) {
+func (d defaultSessionModel) CreateEmptySession(sessionType int, extData *string, name string, remark string) (*Session, error) {
 	sessionId := int64(d.snowflakeNode.Generate())
 	currTime := time.Now().UnixMilli()
 	session := Session{
 		Id:         sessionId,
 		Type:       sessionType,
+		Name:       name,
+		Remark:     remark,
 		ExtData:    extData,
 		CreateTime: currTime,
 		UpdateTime: currTime,

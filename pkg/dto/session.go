@@ -6,6 +6,8 @@ type CreateSessionReq struct {
 	EntityId int64   `json:"entity_id"` // 单聊type为对方用户id,group或supergroup为群id
 	Members  []int64 `json:"members"`   // 单聊时不用提交该字段
 	ExtData  *string `json:"ext_data"`  // 业务方扩展字段
+	Name     string  `json:"name"`      // session名
+	Remark   string  `json:"remark"`
 }
 
 type CreateSessionRes struct {
@@ -33,12 +35,11 @@ type UpdateSessionReq struct {
 }
 
 type UpdateUserSessionReq struct {
-	UId      int64   `json:"u_id"`
-	SId      int64   `json:"s_id"`
-	Top      *int64  `json:"top"`
-	Status   *int    `json:"status"`
-	ExtData  *string `json:"ext_data"`
-	ParentId *int64  `json:"parent_id"`
+	UId      int64  `json:"u_id"`
+	SId      int64  `json:"s_id"`
+	Top      *int64 `json:"top"`
+	Status   *int   `json:"status"`
+	ParentId *int64 `json:"parent_id"`
 }
 
 type GetUserSessionsReq struct {

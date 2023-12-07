@@ -91,7 +91,7 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 }
 
 func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (*dto.CreateSessionRes, error) {
-	session, err := l.appCtx.SessionModel().CreateEmptySession(req.Type, req.ExtData)
+	session, err := l.appCtx.SessionModel().CreateEmptySession(req.Type, req.ExtData, req.Name, req.Remark)
 	if err != nil {
 		return nil, err
 	}
@@ -200,7 +200,7 @@ func (l *SessionLogic) UpdateUserSession(req dto.UpdateUserSessionReq) (err erro
 			l.appCtx.Logger().Errorf("release locker success: %t, error: %s", success, lockErr.Error())
 		}
 	}()
-	err = l.appCtx.UserSessionModel().UpdateUserSession([]int64{req.UId}, req.SId, nil, nil, nil, req.ExtData, req.Top, req.Status, nil, req.ParentId)
+	err = l.appCtx.UserSessionModel().UpdateUserSession([]int64{req.UId}, req.SId, nil, nil, nil, nil, req.Top, req.Status, nil, req.ParentId)
 	if err == nil {
 		err = l.appCtx.SessionUserModel().UpdateUser(req.SId, []int64{req.UId}, nil, req.Status, nil)
 	} else {
