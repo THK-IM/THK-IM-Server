@@ -120,7 +120,7 @@ func onMqPushMsgReceived(m map[string]interface{}, server websocket.Server, ctx 
 }
 
 func onWsClientMsgReceived(ctx *app.Context, client websocket.Client, ty int, body *string) error {
-	if ty == event.SignalPing {
+	if ty == event.SignalHeatBeat {
 		return onWsHeatBeatMsgReceived(ctx, client, body)
 	}
 	return nil
@@ -128,16 +128,13 @@ func onWsClientMsgReceived(ctx *app.Context, client websocket.Client, ty int, bo
 
 func onWsHeatBeatMsgReceived(ctx *app.Context, client websocket.Client, body *string) error {
 	// 心跳
-	heatBody := &event.SignalBody{
-		Type: event.SignalPong,
-	}
-	heatBeat, err := json.Marshal(heatBody)
+	heatBody, err := event.BuildSignalBody(event.SignalHeatBeat, "pong")
 	if err != nil {
 		return err
 	}
 	ctx.Logger().Info(client.Info())
 	sendUserOnlineStatus(ctx, client, true)
-	return client.WriteMessage(string(heatBeat))
+	return client.WriteMessage(heatBody)
 }
 
 func sendUserOnlineStatus(ctx *app.Context, client websocket.Client, online bool) {

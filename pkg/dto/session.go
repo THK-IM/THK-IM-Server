@@ -12,6 +12,7 @@ type CreateSessionReq struct {
 
 type CreateSessionRes struct {
 	SId      int64   `json:"s_id"`
+	ParentId int64   `json:"parent_id"`
 	EntityId int64   `json:"entity_id"`
 	Type     int     `json:"type"`
 	Name     string  `json:"name"`

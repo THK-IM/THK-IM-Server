@@ -11,11 +11,10 @@ const (
 	PushEventBodyKey = "push_body_key"
 
 	SignalNewMessage  = 0
-	SignalPing        = 1
-	SignalPong        = 2
-	SignalSyncTime    = 3
-	SignalConnId      = 4
-	SignalKickOffUser = 5
+	SignalHeatBeat    = 1
+	SignalSyncTime    = 2
+	SignalConnId      = 3
+	SignalKickOffUser = 4
 	SignalExtended    = 100
 )
 

@@ -57,8 +57,9 @@ func (l *SessionLogic) CreateSession(req dto.CreateSessionReq) (*dto.CreateSessi
 			}
 			return &dto.CreateSessionRes{
 				SId:      userSession.SessionId,
-				Type:     userSession.Type,
 				EntityId: userSession.EntityId,
+				ParentId: userSession.ParentId,
+				Type:     userSession.Type,
 				Name:     userSession.Name,
 				Remark:   userSession.Remark,
 				Role:     userSession.Role,
@@ -136,8 +137,9 @@ func (l *SessionLogic) createNewSession(req dto.CreateSessionReq) (*dto.CreateSe
 
 	res := &dto.CreateSessionRes{
 		SId:      userSession.SessionId,
-		Type:     userSession.Type,
 		EntityId: userSession.EntityId,
+		ParentId: userSession.ParentId,
+		Type:     userSession.Type,
 		Name:     userSession.Name,
 		Remark:   userSession.Remark,
 		Role:     userSession.Role,
