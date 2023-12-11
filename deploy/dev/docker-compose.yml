@@ -13,6 +13,41 @@ services:
       - ./nginx/lua:/usr/local/openresty/nginx/lua
     ports:
       - "80:80"
+  mysql-server:
+    # 指定容器的名称
+    container_name: server
+    # 指定镜像和版本
+    image: mysql:8.0
+    ports:
+      - "13306:3306"
+    restart: always
+    # 容器日志大小配置
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '5g'
+    environment:
+      MYSQL_ROOT_PASSWORD: vizoss
+      MYSQL_DATABASE: thk_im
+      MYSQL_USER: thk-im-user
+      MYSQL_PASSWORD: thk-im-pwd
+    volumes:
+      # 挂载数据目录
+      - ./mysql/data:/var/lib/mysql
+      # 挂载配置文件目录
+      - ./mysql/config:/etc/mysql/conf.d
+  redis-server:
+    image: redis:7.2
+    container_name: redis-serve
+    restart: always
+    ports:
+      - '16379:6379'
+    volumes:
+      - ./redis/data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf
+      - ./redis/logs:/logs
+    #配置文件启动
+    command: redis-server /usr/local/etc/redis/redis.conf
   minio1:
     image: "quay.io/minio/minio:RELEASE.2023-09-07T02-05-02Z"
     container_name: minio
