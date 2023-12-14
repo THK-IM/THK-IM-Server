@@ -27,10 +27,11 @@ services:
       options:
         max-size: '5g'
     environment:
-      MYSQL_ROOT_PASSWORD: vizoss
+      MYSQL_ROOT_PASSWORD: thk_im_pwd
+      MYSQL_ROOT_HOST: '%'
       MYSQL_DATABASE: thk_im
-      MYSQL_USER: thk-im-user
-      MYSQL_PASSWORD: thk-im-pwd
+      MYSQL_USER: thk_im
+      MYSQL_PASSWORD: thk_im_pwd
     volumes:
       # 挂载数据目录
       - ./mysql/data:/var/lib/mysql
@@ -59,7 +60,7 @@ services:
     command: server /data --console-address ":19090"
     environment:
       MINIO_ROOT_USER: thk_im
-      MINIO_ROOT_PASSWORD: thk_im_mino
+      MINIO_ROOT_PASSWORD: thk_im_pwd
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
