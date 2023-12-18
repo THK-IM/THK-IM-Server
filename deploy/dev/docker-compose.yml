@@ -1,6 +1,7 @@
 version: "3"
 services:
   openresty:
+    container_name: openresty-server
     image: openresty/openresty:alpine
     restart: always
     volumes:
@@ -15,7 +16,7 @@ services:
       - "80:80"
   mysql-server:
     # 指定容器的名称
-    container_name: server
+    container_name: mysql-server
     # 指定镜像和版本
     image: mysql:8.0
     ports:
@@ -38,8 +39,8 @@ services:
       # 挂载配置文件目录
       - ./mysql/config:/etc/mysql/conf.d
   redis-server:
+    container_name: redis-server
     image: redis:7.2
-    container_name: redis-serve
     restart: always
     ports:
       - '16379:6379'
@@ -50,8 +51,8 @@ services:
     #配置文件启动
     command: redis-server /usr/local/etc/redis/redis.conf
   minio1:
+    container_name: minio-server
     image: "quay.io/minio/minio:RELEASE.2023-09-07T02-05-02Z"
-    container_name: minio
     ports:
       - "9000:9000"
       - "19090:19090"
