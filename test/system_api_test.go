@@ -275,7 +275,6 @@ func TestPushSystemMessage(t *testing.T) {
 		pushMessageReq := &dto.PushMessageReq{
 			UIds:        uIds[index],
 			Type:        0,
-			SubType:     11,
 			Body:        "11111",
 			OfflinePush: false,
 		}

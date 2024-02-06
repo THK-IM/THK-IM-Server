@@ -11,9 +11,9 @@ import (
 )
 
 const (
-	endpoint  = "192.168.1.6:19000"
-	thkImAk   = "7pwGcuomjng4cRKWYPNz"
-	thkImSk   = "IzN7VrEKOGIPIEkhvQU6cJepu6bdrNC95BRYslwJ"
+	endpoint  = "192.168.1.4:9000"
+	thkImAk   = "SnK8hH6GvrTtlTETooKU"
+	thkImSk   = "EA3wI8dVMwC7yo5QU5hizRmwaSs7wdZSA0U7JBnC"
 	thkBucket = "thk"
 )
 
@@ -21,6 +21,7 @@ func TestGenerateSignPostParams(t *testing.T) {
 	s3Client, err := minio.New(endpoint, &minio.Options{
 		Creds:  credentials.NewStaticV4(thkImAk, thkImSk, ""),
 		Secure: false,
+		Region: "us-east-1",
 	})
 	if err != nil {
 		fmt.Println(err)
@@ -33,7 +34,7 @@ func TestGenerateSignPostParams(t *testing.T) {
 		fmt.Println(err)
 		t.Fail()
 	}
-	err = policy.SetKey("1/sample-111s.mp3")
+	err = policy.SetKey("user/sample-111s.mp3")
 	if err != nil {
 		fmt.Println(err)
 		t.Fail()
